@@ -1,107 +1,108 @@
 
-import {
-  CalendarClock,
-  Clock,
-  Edit,
-  Trash,
-  UserCircle2,
-} from "lucide-react";
-import { Button } from "./ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { cn } from "@/lib/utils";
 import { TestSchedule, UserRole } from "@/types/test";
+import { Button } from "@/components/ui/button";
+import { Edit, Trash2, FileQuestion } from "lucide-react";
 
 interface TestScheduleTableProps {
   tests: TestSchedule[];
   onEdit: (test: TestSchedule) => void;
   onDelete: (id: string) => void;
   userRole: UserRole;
+  onAddQuestions?: (test: TestSchedule) => void;
 }
 
-const TestScheduleTable = ({ tests, onEdit, onDelete, userRole }: TestScheduleTableProps) => {
+const TestScheduleTable = ({ 
+  tests, 
+  onEdit, 
+  onDelete, 
+  userRole,
+  onAddQuestions 
+}: TestScheduleTableProps) => {
   const isAdmin = userRole === "ADMIN";
   
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[40%]">Test Name</TableHead>
-            <TableHead>Instructor</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>Status</TableHead>
-            {isAdmin && <TableHead className="text-right">Actions</TableHead>}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Title</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Instructor</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Date</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Time</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Duration</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Participants</th>
+            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
           {tests.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8 text-gray-500">
-                No test schedules found
-              </TableCell>
-            </TableRow>
+            <tr>
+              <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                No tests found. Create a new test to get started.
+              </td>
+            </tr>
           ) : (
             tests.map((test) => (
-              <TableRow key={test.id}>
-                <TableCell className="font-medium">{test.title}</TableCell>
-                <TableCell className="flex items-center gap-1">
-                  <UserCircle2 className="h-4 w-4 text-gray-500" />
-                  {test.instructor}
-                </TableCell>
-                <TableCell className="flex items-center gap-1">
-                  <CalendarClock className="h-4 w-4 text-gray-500" />
-                  {test.date}
-                </TableCell>
-                <TableCell className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  {test.time}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={cn(
-                      "px-3 py-1 rounded-full text-xs font-semibold",
-                      test.status === "ONLINE"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-amber-100 text-amber-600"
-                    )}
-                  >
+              <tr key={test.id} className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-medium">{test.title}</td>
+                <td className="px-4 py-4">{test.instructor}</td>
+                <td className="px-4 py-4">{test.date}</td>
+                <td className="px-4 py-4">{test.time}</td>
+                <td className="px-4 py-4">{test.duration}</td>
+                <td className="px-4 py-4">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    test.status === "ONLINE" 
+                      ? "bg-green-100 text-green-800" 
+                      : "bg-gray-100 text-gray-800"
+                  }`}>
                     {test.status}
                   </span>
-                </TableCell>
-                {isAdmin && (
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
+                </td>
+                <td className="px-4 py-4">
+                  {test.participants && test.participants.map((participant, index) => (
+                    <span key={index} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">
+                      {participant}
+                    </span>
+                  ))}
+                </td>
+                <td className="px-4 py-4 text-right space-x-2">
+                  {isAdmin && onAddQuestions && (
+                    <Button 
+                      onClick={() => onAddQuestions(test)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-primary border-primary hover:bg-primary hover:text-white"
+                    >
+                      <FileQuestion className="h-4 w-4 mr-1" />
+                      Questions
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <>
+                      <Button 
+                        onClick={() => onEdit(test)} 
+                        variant="outline" 
                         size="sm"
-                        onClick={() => onEdit(test)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="outline"
+                      <Button 
+                        onClick={() => onDelete(test.id)} 
+                        variant="outline" 
                         size="sm"
-                        className="text-red-500 border-red-200 hover:bg-red-50"
-                        onClick={() => onDelete(test.id)}
+                        className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
                       >
-                        <Trash className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </TableCell>
-                )}
-              </TableRow>
+                    </>
+                  )}
+                </td>
+              </tr>
             ))
           )}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 };

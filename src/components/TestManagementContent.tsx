@@ -7,6 +7,8 @@ import { Input } from "./ui/input";
 import { TestSchedule, UserRole } from "@/types/test";
 import TestScheduleTable from "./TestScheduleTable";
 import TestScheduleDialog from "./TestScheduleDialog";
+import TestQuestionForm, { Question } from "./TestQuestionForm";
+import MockTestPreview from "./MockTestPreview";
 import { toast } from "sonner";
 
 // Sample data
@@ -51,7 +53,10 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
   const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isQuestionFormOpen, setIsQuestionFormOpen] = useState(false);
+  const [isMockTestPreviewOpen, setIsMockTestPreviewOpen] = useState(false);
   const [currentTest, setCurrentTest] = useState<TestSchedule | null>(null);
+  const [currentTestQuestions, setCurrentTestQuestions] = useState<Question[]>([]);
   
   const isAdmin = userRole === "ADMIN";
 
@@ -85,6 +90,7 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
         t.id === test.id ? test : t
       ));
       toast.success("Test updated successfully");
+      setIsDialogOpen(false);
     } else {
       // Add new test
       const newTest = {
@@ -93,8 +99,12 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
       };
       setTestSchedules([...testSchedules, newTest]);
       toast.success("New test created successfully");
+      setIsDialogOpen(false);
+      
+      // Open the question form after creating a new test
+      setCurrentTest(newTest);
+      setIsQuestionFormOpen(true);
     }
-    setIsDialogOpen(false);
   };
 
   const handleDeleteTest = (id: string) => {
@@ -104,6 +114,21 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
     }
     setTestSchedules(testSchedules.filter(test => test.id !== id));
     toast.success("Test deleted successfully");
+  };
+
+  const handleAddQuestions = (test: TestSchedule) => {
+    if (!isAdmin) {
+      toast.error("Only administrators can add questions to tests");
+      return;
+    }
+    setCurrentTest(test);
+    setIsQuestionFormOpen(true);
+  };
+
+  const handlePreviewMockTest = (questions: Question[]) => {
+    setCurrentTestQuestions(questions);
+    setIsQuestionFormOpen(false);
+    setIsMockTestPreviewOpen(true);
   };
 
   const filteredTests = testSchedules.filter(test => 
@@ -161,6 +186,7 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
           onEdit={handleEditTest} 
           onDelete={handleDeleteTest}
           userRole={userRole}
+          onAddQuestions={handleAddQuestions}
         />
         
         <TestScheduleDialog 
@@ -169,6 +195,25 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
           onSave={handleSaveTest} 
           test={currentTest} 
         />
+
+        {/* New Components */}
+        {currentTest && (
+          <>
+            <TestQuestionForm
+              isOpen={isQuestionFormOpen}
+              onClose={() => setIsQuestionFormOpen(false)}
+              onPreview={handlePreviewMockTest}
+              testTitle={currentTest.title}
+            />
+
+            <MockTestPreview
+              isOpen={isMockTestPreviewOpen}
+              onClose={() => setIsMockTestPreviewOpen(false)}
+              questions={currentTestQuestions}
+              testTitle={currentTest.title}
+            />
+          </>
+        )}
       </main>
     </SidebarInset>
   );
