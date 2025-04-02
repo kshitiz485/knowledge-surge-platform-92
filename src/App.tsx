@@ -6,11 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
+import Tests from "./pages/Tests";
 import TestManagement from "./pages/TestManagement";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import Announcements from "./pages/Announcements";
 import Videos from "./pages/Videos";
 import StudyMaterial from "./pages/StudyMaterial";
@@ -28,20 +29,22 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            {/* Redirect /dashboard to /tests */}
+            <Route path="/dashboard" element={<Navigate to="/tests" replace />} />
             <Route
-              path="/dashboard"
+              path="/tests"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Tests />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/test-management"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
                   <TestManagement />
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route

@@ -8,7 +8,6 @@ import {
   SidebarMenuButton
 } from "@/components/ui/sidebar";
 import { 
-  LayoutDashboard, 
   Megaphone, 
   ClipboardList, 
   CalendarPlus,
@@ -16,12 +15,19 @@ import {
   BookOpen, 
   LineChart, 
   HelpCircle, 
-  Settings 
+  Settings,
+  ShieldAlert
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AppSidebar = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  
+  // Get user role from the auth context (default to "USER" if not found)
+  const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
+  const isAdmin = userRole === "ADMIN";
   
   return (
     <Sidebar className="bg-gradient-to-br from-primary to-secondary text-white">
@@ -31,34 +37,31 @@ const AppSidebar = () => {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"} tooltip="Overview">
-              <Link to="/dashboard">
-                <LayoutDashboard className={location.pathname === "/dashboard" ? "text-gold" : ""} />
-                <span>Overview</span>
+            <SidebarMenuButton asChild isActive={location.pathname === "/tests" || location.pathname === "/dashboard"} tooltip="Tests">
+              <Link to="/tests">
+                <ClipboardList className={location.pathname === "/tests" || location.pathname === "/dashboard" ? "text-gold" : ""} />
+                <span>Tests</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={location.pathname === "/test-management"} tooltip="Test Management">
+                <Link to="/test-management">
+                  <CalendarPlus className={location.pathname === "/test-management" ? "text-gold" : ""} />
+                  <span>Test Management</span>
+                  <div className="ml-2 p-1 bg-amber-100 rounded-full">
+                    <ShieldAlert className="h-3 w-3 text-amber-600" />
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={location.pathname === "/announcements"} tooltip="Announcements">
               <Link to="/announcements">
                 <Megaphone />
                 <span>Announcements</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/tests"} tooltip="Tests">
-              <Link to="/tests">
-                <ClipboardList />
-                <span>Tests</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/test-management"} tooltip="Test Management">
-              <Link to="/test-management">
-                <CalendarPlus className={location.pathname === "/test-management" ? "text-gold" : ""} />
-                <span>Test Management</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

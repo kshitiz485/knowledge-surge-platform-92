@@ -45,11 +45,10 @@ const initialTestSchedules: TestSchedule[] = [
   }
 ];
 
-interface TestManagementContentProps {
-  userRole: UserRole;
-}
-
-const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
+const TestManagementContent = () => {
+  // Always admin in this view since we're using AdminRoute
+  const userRole: UserRole = "ADMIN";
+  
   const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -57,33 +56,18 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
   const [isMockTestPreviewOpen, setIsMockTestPreviewOpen] = useState(false);
   const [currentTest, setCurrentTest] = useState<TestSchedule | null>(null);
   const [currentTestQuestions, setCurrentTestQuestions] = useState<Question[]>([]);
-  
-  const isAdmin = userRole === "ADMIN";
 
   const handleAddNewTest = () => {
-    if (!isAdmin) {
-      toast.error("Only administrators can add new tests");
-      return;
-    }
     setCurrentTest(null);
     setIsDialogOpen(true);
   };
 
   const handleEditTest = (test: TestSchedule) => {
-    if (!isAdmin) {
-      toast.error("Only administrators can edit tests");
-      return;
-    }
     setCurrentTest(test);
     setIsDialogOpen(true);
   };
 
   const handleSaveTest = (test: TestSchedule) => {
-    if (!isAdmin) {
-      toast.error("Only administrators can save test changes");
-      return;
-    }
-    
     if (currentTest) {
       // Edit existing test
       setTestSchedules(testSchedules.map(t => 
@@ -108,19 +92,11 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
   };
 
   const handleDeleteTest = (id: string) => {
-    if (!isAdmin) {
-      toast.error("Only administrators can delete tests");
-      return;
-    }
     setTestSchedules(testSchedules.filter(test => test.id !== id));
     toast.success("Test deleted successfully");
   };
 
   const handleAddQuestions = (test: TestSchedule) => {
-    if (!isAdmin) {
-      toast.error("Only administrators can add questions to tests");
-      return;
-    }
     setCurrentTest(test);
     setIsQuestionFormOpen(true);
   };
@@ -143,18 +119,14 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
         <div className="flex items-center gap-3">
           <SidebarTrigger className="text-primary" />
           <h1 className="text-2xl font-playfair text-primary">Test Management</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <div className="flex items-center gap-2 bg-amber-100 text-amber-600 px-3 py-1 rounded-full mr-3">
-              <ShieldAlert className="h-4 w-4" />
-              <span className="text-xs font-semibold">Admin Mode</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
-            <UserCircle2 className="text-gold h-5 w-5" />
-            <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+          <div className="flex items-center gap-2 bg-amber-100 text-amber-600 px-3 py-1 rounded-full ml-3">
+            <ShieldAlert className="h-4 w-4" />
+            <span className="text-xs font-semibold">Admin Only</span>
           </div>
+        </div>
+        <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
+          <UserCircle2 className="text-gold h-5 w-5" />
+          <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
         </div>
       </header>
       
@@ -169,16 +141,10 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
               className="pl-9"
             />
           </div>
-          {isAdmin ? (
-            <Button onClick={handleAddNewTest} className="bg-gold hover:bg-gold/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Test
-            </Button>
-          ) : (
-            <div className="text-sm text-gray-500 italic">
-              View-only mode. Contact an administrator for changes.
-            </div>
-          )}
+          <Button onClick={handleAddNewTest} className="bg-gold hover:bg-gold/90 text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Test
+          </Button>
         </div>
         
         <TestScheduleTable 
@@ -196,7 +162,7 @@ const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
           test={currentTest} 
         />
 
-        {/* New Components */}
+        {/* Question Forms */}
         {currentTest && (
           <>
             <TestQuestionForm

@@ -55,7 +55,22 @@ const defaultFormState: FormState<FieldValues> = {
   dirtyFields: {},
   touchedFields: {},
   errors: {},
-  defaultValues: undefined
+  defaultValues: undefined,
+  disabled: false,
+  validatingFields: {}
+}
+
+type FormFieldState = {
+  invalid: boolean
+  isDirty: boolean
+  isTouched: boolean
+  isValidating: boolean
+  error?: FieldError
+  id: string
+  name: string
+  formItemId: string
+  formDescriptionId: string
+  formMessageId: string
 }
 
 const useFormField = () => {
@@ -71,7 +86,8 @@ const useFormField = () => {
 
   const { id } = itemContext
 
-  return {
+  // Create a combined state object with all properties
+  const combinedState: FormFieldState = {
     id,
     name: fieldContext.name,
     formItemId: `${id}-form-item`,
@@ -79,6 +95,8 @@ const useFormField = () => {
     formMessageId: `${id}-form-item-message`,
     ...fieldState,
   }
+
+  return combinedState
 }
 
 type FormItemContextValue = {
