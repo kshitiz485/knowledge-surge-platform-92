@@ -55,6 +55,14 @@ const Navbar = () => {
                 Resources
               </Link>
             </li>
+            <li>
+              <Link 
+                to="/dashboard" 
+                className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
+              >
+                Dashboard
+              </Link>
+            </li>
           </ul>
 
           {/* Login Button */}
@@ -114,6 +122,15 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Resources
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/dashboard" 
+                className="text-white hover:text-gold transition-colors duration-300"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard
               </Link>
             </li>
             <li>
