@@ -1,16 +1,40 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, User, LogOut } from "lucide-react";
 import AuthModal from "./AuthModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const handleAuthClick = () => {
+    if (user) {
+      // If user is logged in, show dropdown
+      return;
+    } else {
+      // If user is not logged in, navigate to auth page
+      navigate("/auth");
+    }
   };
 
   return (
@@ -18,7 +42,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-20">
           <div className="font-playfair text-2xl md:text-3xl font-bold gold-gradient">
-            EduLux
+            <Link to="/">EduLux</Link>
           </div>
 
           {/* Desktop Nav Links */}
@@ -55,24 +79,49 @@ const Navbar = () => {
                 Resources
               </Link>
             </li>
-            <li>
-              <Link 
-                to="/dashboard" 
-                className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
-              >
-                Dashboard
-              </Link>
-            </li>
+            {user && (
+              <li>
+                <Link 
+                  to="/dashboard" 
+                  className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
+                >
+                  Dashboard
+                </Link>
+              </li>
+            )}
           </ul>
 
-          {/* Login Button */}
-          <Button 
-            variant="outline" 
-            onClick={() => setIsAuthModalOpen(true)}
-            className="hidden md:flex border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
-          >
-            Login
-          </Button>
+          {/* Login/User Button */}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="hidden md:flex border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/dashboard")}>
+                  Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button 
+              variant="outline" 
+              onClick={handleAuthClick}
+              className="hidden md:flex border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
+            >
+              Login
+            </Button>
+          )}
 
           {/* Mobile Menu Button */}
           <button 
@@ -124,26 +173,38 @@ const Navbar = () => {
                 Resources
               </Link>
             </li>
+            {user && (
+              <li>
+                <Link 
+                  to="/dashboard" 
+                  className="text-white hover:text-gold transition-colors duration-300"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              </li>
+            )}
             <li>
-              <Link 
-                to="/dashboard" 
-                className="text-white hover:text-gold transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setIsAuthModalOpen(true);
-                  setIsMenuOpen(false);
-                }}
-                className="border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
-              >
-                Login
-              </Button>
+              {user ? (
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
+                >
+                  Sign Out
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    navigate("/auth");
+                    setIsMenuOpen(false);
+                  }}
+                  className="border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
+                >
+                  Login
+                </Button>
+              )}
             </li>
           </ul>
         </div>

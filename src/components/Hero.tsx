@@ -1,10 +1,19 @@
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import AuthModal from "./AuthModal";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Hero = () => {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleButtonClick = () => {
+    if (user) {
+      navigate("/dashboard");
+    } else {
+      navigate("/auth");
+    }
+  };
 
   return (
     <section className="pt-32 pb-20 md:pt-40 md:pb-28 bg-gradient-to-b from-primary to-secondary text-white">
@@ -32,18 +41,12 @@ const Hero = () => {
         
         <Button 
           size="lg"
-          onClick={() => setIsAuthModalOpen(true)}
+          onClick={handleButtonClick}
           className="bg-transparent text-gold hover:bg-gold hover:text-primary border-2 border-gold transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold"
         >
-          Begin Your Journey
+          {user ? "Go to Dashboard" : "Begin Your Journey"}
         </Button>
       </div>
-
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        initialView="signup"
-      />
     </section>
   );
 };
