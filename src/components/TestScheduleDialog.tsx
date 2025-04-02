@@ -1,6 +1,7 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { format, parse } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,8 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Calendar } from "./ui/calendar";
+import { CalendarIcon, Clock } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -27,6 +30,12 @@ import {
   FormLabel, 
   FormMessage 
 } from "./ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover";
+import { cn } from "@/lib/utils";
 
 interface TestScheduleDialogProps {
   isOpen: boolean;
@@ -54,9 +63,69 @@ const TestScheduleDialog = ({
     },
   });
 
+  // State for date picker
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  
+  // Time options
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutes = ["00", "15", "30", "45"];
+  const [startHour, setStartHour] = useState<string>("02");
+  const [startMinute, setStartMinute] = useState<string>("00");
+  const [startAmPm, setStartAmPm] = useState<string>("PM");
+  const [endHour, setEndHour] = useState<string>("05");
+  const [endMinute, setEndMinute] = useState<string>("00");
+  const [endAmPm, setEndAmPm] = useState<string>("PM");
+
+  // Parse time from string to components
+  const parseTimeString = (timeString: string) => {
+    if (!timeString) return;
+    
+    const parts = timeString.split(" - ");
+    if (parts.length !== 2) return;
+    
+    const startTime = parts[0].trim();
+    const endTime = parts[1].trim();
+    
+    // Parse start time
+    const startMatch = startTime.match(/(\d+):(\d+)\s+(AM|PM)/i);
+    if (startMatch) {
+      setStartHour(startMatch[1].padStart(2, '0'));
+      setStartMinute(startMatch[2]);
+      setStartAmPm(startMatch[3].toUpperCase());
+    }
+    
+    // Parse end time
+    const endMatch = endTime.match(/(\d+):(\d+)\s+(AM|PM)/i);
+    if (endMatch) {
+      setEndHour(endMatch[1].padStart(2, '0'));
+      setEndMinute(endMatch[2]);
+      setEndAmPm(endMatch[3].toUpperCase());
+    }
+  };
+
+  // Format time components to string
+  const formatTimeString = () => {
+    return `${startHour}:${startMinute} ${startAmPm} - ${endHour}:${endMinute} ${endAmPm}`;
+  };
+
   useEffect(() => {
     if (test) {
       form.reset(test);
+      
+      // Parse date string to Date object
+      if (test.date) {
+        try {
+          const parsedDate = parse(test.date, "yyyy/MM/dd", new Date());
+          setSelectedDate(parsedDate);
+        } catch (error) {
+          console.error("Error parsing date:", error);
+        }
+      }
+      
+      // Parse time string
+      if (test.time) {
+        parseTimeString(test.time);
+      }
     } else {
       form.reset({
         id: "",
@@ -68,8 +137,27 @@ const TestScheduleDialog = ({
         status: "ONLINE",
         participants: [],
       });
+      setSelectedDate(undefined);
+      // Reset time components
+      setStartHour("02");
+      setStartMinute("00");
+      setStartAmPm("PM");
+      setEndHour("05");
+      setEndMinute("00");
+      setEndAmPm("PM");
     }
   }, [test, form]);
+
+  // Update form values when date or time components change
+  useEffect(() => {
+    if (selectedDate) {
+      const formattedDate = format(selectedDate, "yyyy/MM/dd");
+      form.setValue("date", formattedDate);
+    }
+    
+    const formattedTime = formatTimeString();
+    form.setValue("time", formattedTime);
+  }, [selectedDate, startHour, startMinute, startAmPm, endHour, endMinute, endAmPm, form]);
 
   const handleSubmit = (data: TestSchedule) => {
     onSave(data);
@@ -119,16 +207,37 @@ const TestScheduleDialog = ({
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="YYYY/MM/DD" 
-                        required 
-                        pattern="\d{4}/\d{2}/\d{2}"
-                      />
-                    </FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              field.value
+                            ) : (
+                              <span>Select date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -140,13 +249,131 @@ const TestScheduleDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Time</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="HH:MM AM/PM - HH:MM AM/PM" 
-                        required
-                      />
-                    </FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              field.value
+                            ) : (
+                              <span>Select time</span>
+                            )}
+                            <Clock className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-4" align="start">
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="font-medium mb-2">Start Time</h4>
+                            <div className="flex gap-2">
+                              <Select 
+                                value={startHour} 
+                                onValueChange={setStartHour}
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue placeholder="Hour" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {hours.map((hour) => (
+                                    <SelectItem 
+                                      key={`start-hour-${hour}`} 
+                                      value={hour.toString().padStart(2, '0')}
+                                    >
+                                      {hour}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select 
+                                value={startMinute} 
+                                onValueChange={setStartMinute}
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue placeholder="Min" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {minutes.map((min) => (
+                                    <SelectItem key={`start-min-${min}`} value={min}>
+                                      {min}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select 
+                                value={startAmPm} 
+                                onValueChange={setStartAmPm}
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="AM">AM</SelectItem>
+                                  <SelectItem value="PM">PM</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium mb-2">End Time</h4>
+                            <div className="flex gap-2">
+                              <Select 
+                                value={endHour} 
+                                onValueChange={setEndHour}
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue placeholder="Hour" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {hours.map((hour) => (
+                                    <SelectItem 
+                                      key={`end-hour-${hour}`} 
+                                      value={hour.toString().padStart(2, '0')}
+                                    >
+                                      {hour}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select 
+                                value={endMinute} 
+                                onValueChange={setEndMinute}
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue placeholder="Min" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {minutes.map((min) => (
+                                    <SelectItem key={`end-min-${min}`} value={min}>
+                                      {min}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select 
+                                value={endAmPm} 
+                                onValueChange={setEndAmPm}
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="AM">AM</SelectItem>
+                                  <SelectItem value="PM">PM</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
