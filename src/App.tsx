@@ -11,6 +11,10 @@ import TestManagement from "./pages/TestManagement";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Announcements from "./pages/Announcements";
+import Videos from "./pages/Videos";
+import StudyMaterial from "./pages/StudyMaterial";
+import Doubts from "./pages/Doubts";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +41,38 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <TestManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/announcements"
+              element={
+                <ProtectedRoute>
+                  <Announcements />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/videos"
+              element={
+                <ProtectedRoute>
+                  <Videos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/study-material"
+              element={
+                <ProtectedRoute>
+                  <StudyMaterial />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doubts"
+              element={
+                <ProtectedRoute>
+                  <Doubts />
                 </ProtectedRoute>
               }
             />

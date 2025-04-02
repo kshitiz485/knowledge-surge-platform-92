@@ -24,3 +24,67 @@ export interface TestQuestion {
   options: TestOption[];
   subject: "physics" | "chemistry" | "mathematics";
 }
+
+export interface TestResult {
+  score: number;
+  totalScore: number;
+  timeTaken: string;
+  accuracy: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  partiallyCorrectAnswers: number;
+  unattemptedQuestions: number;
+  rank?: {
+    batch: number;
+    batchTotal: number;
+    institute: number;
+    instituteTotal: number;
+    percentile: number;
+  };
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  author: string;
+  important: boolean;
+}
+
+export interface VideoResource {
+  id: string;
+  title: string;
+  description: string;
+  youtubeId: string;
+  subject: string;
+  uploadedBy: string;
+  date: string;
+}
+
+export interface StudyMaterial {
+  id: string;
+  title: string;
+  description: string;
+  fileUrl: string;
+  subject: string;
+  uploadedBy: string;
+  uploadDate: string;
+  fileType: "pdf" | "doc" | "ppt" | "other";
+}
+
+export interface Doubt {
+  id: string;
+  question: string;
+  askedBy: string;
+  date: string;
+  subject: string;
+  status: "answered" | "pending";
+  answers?: {
+    id: string;
+    text: string;
+    answeredBy: string;
+    date: string;
+  }[];
+}
