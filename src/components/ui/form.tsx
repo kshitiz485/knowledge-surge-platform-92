@@ -9,6 +9,8 @@ import {
   FieldValues,
   FormProvider,
   useFormContext,
+  FieldError,
+  FormState,
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
@@ -40,12 +42,28 @@ const FormField = <
   )
 }
 
+// Create a default form state to use when the context is null
+const defaultFormState: FormState<FieldValues> = {
+  isDirty: false,
+  isLoading: false,
+  isSubmitted: false,
+  isSubmitSuccessful: false,
+  isSubmitting: false,
+  isValidating: false,
+  isValid: false,
+  submitCount: 0,
+  dirtyFields: {},
+  touchedFields: {},
+  errors: {},
+  defaultValues: undefined
+}
+
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext() || { getFieldState: () => {}, formState: {} }
+  const formContext = useFormContext()
 
-  const fieldState = getFieldState?.(fieldContext.name, formState)
+  const fieldState = formContext?.getFieldState?.(fieldContext.name, formContext.formState) || {}
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")

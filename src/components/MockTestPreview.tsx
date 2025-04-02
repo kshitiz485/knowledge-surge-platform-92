@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Question } from "./TestQuestionForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -34,7 +33,7 @@ const MockTestPreview: React.FC<MockTestPreviewProps> = ({
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [timerInterval, setTimerInterval] = useState<number | null>(null);
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Initialize question status
   useEffect(() => {
