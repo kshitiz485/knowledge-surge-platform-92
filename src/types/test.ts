@@ -9,3 +9,5 @@ export interface TestSchedule {
   status: "ONLINE" | "OFFLINE";
   participants?: string[];
 }
+
+export type UserRole = "ADMIN" | "USER";

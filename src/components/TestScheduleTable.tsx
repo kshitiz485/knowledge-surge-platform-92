@@ -16,15 +16,18 @@ import {
   TableRow,
 } from "./ui/table";
 import { cn } from "@/lib/utils";
-import { TestSchedule } from "@/types/test";
+import { TestSchedule, UserRole } from "@/types/test";
 
 interface TestScheduleTableProps {
   tests: TestSchedule[];
   onEdit: (test: TestSchedule) => void;
   onDelete: (id: string) => void;
+  userRole: UserRole;
 }
 
-const TestScheduleTable = ({ tests, onEdit, onDelete }: TestScheduleTableProps) => {
+const TestScheduleTable = ({ tests, onEdit, onDelete, userRole }: TestScheduleTableProps) => {
+  const isAdmin = userRole === "ADMIN";
+  
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <Table>
@@ -35,13 +38,13 @@ const TestScheduleTable = ({ tests, onEdit, onDelete }: TestScheduleTableProps) 
             <TableHead>Date</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {isAdmin && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {tests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8 text-gray-500">
                 No test schedules found
               </TableCell>
             </TableRow>
@@ -73,25 +76,27 @@ const TestScheduleTable = ({ tests, onEdit, onDelete }: TestScheduleTableProps) 
                     {test.status}
                   </span>
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(test)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-500 border-red-200 hover:bg-red-50"
-                      onClick={() => onDelete(test.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(test)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-500 border-red-200 hover:bg-red-50"
+                        onClick={() => onDelete(test.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}

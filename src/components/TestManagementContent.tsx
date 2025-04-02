@@ -1,12 +1,13 @@
 
 import { useState } from "react";
 import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { UserCircle2, Plus, Search } from "lucide-react";
+import { UserCircle2, Plus, Search, ShieldAlert } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { TestSchedule } from "@/types/test";
+import { TestSchedule, UserRole } from "@/types/test";
 import TestScheduleTable from "./TestScheduleTable";
 import TestScheduleDialog from "./TestScheduleDialog";
+import { toast } from "sonner";
 
 // Sample data
 const initialTestSchedules: TestSchedule[] = [
@@ -42,28 +43,48 @@ const initialTestSchedules: TestSchedule[] = [
   }
 ];
 
-const TestManagementContent = () => {
+interface TestManagementContentProps {
+  userRole: UserRole;
+}
+
+const TestManagementContent = ({ userRole }: TestManagementContentProps) => {
   const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentTest, setCurrentTest] = useState<TestSchedule | null>(null);
+  
+  const isAdmin = userRole === "ADMIN";
 
   const handleAddNewTest = () => {
+    if (!isAdmin) {
+      toast.error("Only administrators can add new tests");
+      return;
+    }
     setCurrentTest(null);
     setIsDialogOpen(true);
   };
 
   const handleEditTest = (test: TestSchedule) => {
+    if (!isAdmin) {
+      toast.error("Only administrators can edit tests");
+      return;
+    }
     setCurrentTest(test);
     setIsDialogOpen(true);
   };
 
   const handleSaveTest = (test: TestSchedule) => {
+    if (!isAdmin) {
+      toast.error("Only administrators can save test changes");
+      return;
+    }
+    
     if (currentTest) {
       // Edit existing test
       setTestSchedules(testSchedules.map(t => 
         t.id === test.id ? test : t
       ));
+      toast.success("Test updated successfully");
     } else {
       // Add new test
       const newTest = {
@@ -71,12 +92,18 @@ const TestManagementContent = () => {
         id: (testSchedules.length + 1).toString() // Simple ID generation
       };
       setTestSchedules([...testSchedules, newTest]);
+      toast.success("New test created successfully");
     }
     setIsDialogOpen(false);
   };
 
   const handleDeleteTest = (id: string) => {
+    if (!isAdmin) {
+      toast.error("Only administrators can delete tests");
+      return;
+    }
     setTestSchedules(testSchedules.filter(test => test.id !== id));
+    toast.success("Test deleted successfully");
   };
 
   const filteredTests = testSchedules.filter(test => 
@@ -92,9 +119,17 @@ const TestManagementContent = () => {
           <SidebarTrigger className="text-primary" />
           <h1 className="text-2xl font-playfair text-primary">Test Management</h1>
         </div>
-        <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
-          <UserCircle2 className="text-gold h-5 w-5" />
-          <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <div className="flex items-center gap-2 bg-amber-100 text-amber-600 px-3 py-1 rounded-full mr-3">
+              <ShieldAlert className="h-4 w-4" />
+              <span className="text-xs font-semibold">Admin Mode</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
+            <UserCircle2 className="text-gold h-5 w-5" />
+            <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+          </div>
         </div>
       </header>
       
@@ -109,16 +144,23 @@ const TestManagementContent = () => {
               className="pl-9"
             />
           </div>
-          <Button onClick={handleAddNewTest} className="bg-gold hover:bg-gold/90 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Test
-          </Button>
+          {isAdmin ? (
+            <Button onClick={handleAddNewTest} className="bg-gold hover:bg-gold/90 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Test
+            </Button>
+          ) : (
+            <div className="text-sm text-gray-500 italic">
+              View-only mode. Contact an administrator for changes.
+            </div>
+          )}
         </div>
         
         <TestScheduleTable 
           tests={filteredTests} 
           onEdit={handleEditTest} 
-          onDelete={handleDeleteTest} 
+          onDelete={handleDeleteTest}
+          userRole={userRole}
         />
         
         <TestScheduleDialog 
