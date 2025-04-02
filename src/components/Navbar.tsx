@@ -79,6 +79,7 @@ const Navbar = () => {
                 Resources
               </Link>
             </li>
+            {/* Only show Dashboard link when user is logged in */}
             {user && (
               <li>
                 <Link 
@@ -173,6 +174,7 @@ const Navbar = () => {
                 Resources
               </Link>
             </li>
+            {/* Only show Dashboard link in mobile menu when user is logged in */}
             {user && (
               <li>
                 <Link 
