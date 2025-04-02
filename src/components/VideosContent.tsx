@@ -256,95 +256,97 @@ const VideosContent = ({ userRole }: VideosContentProps) => {
             <DialogHeader>
               <DialogTitle>{currentVideo ? "Edit Video" : "Add New Video"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(handleSaveVideo)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Video title" {...field} required />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Video description" 
-                        className="min-h-[80px]" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="youtubeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>YouTube Video ID</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g. dQw4w9WgXcQ (part after v= in YouTube URL)" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="subject"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subject</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSaveVideo)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a subject" />
-                        </SelectTrigger>
+                        <Input placeholder="Video title" {...field} required />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
-                        <SelectItem value="Biology">Biology</SelectItem>
-                        <SelectItem value="General">General</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-primary">
-                  {currentVideo ? "Update" : "Add"}
-                </Button>
-              </div>
-            </form>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Video description" 
+                          className="min-h-[80px]" 
+                          {...field} 
+                          required 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="youtubeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>YouTube Video ID</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g. dQw4w9WgXcQ (part after v= in YouTube URL)" 
+                          {...field} 
+                          required 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subject</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a subject" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Physics">Physics</SelectItem>
+                          <SelectItem value="Chemistry">Chemistry</SelectItem>
+                          <SelectItem value="Mathematics">Mathematics</SelectItem>
+                          <SelectItem value="Biology">Biology</SelectItem>
+                          <SelectItem value="General">General</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-primary">
+                    {currentVideo ? "Update" : "Add"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </main>

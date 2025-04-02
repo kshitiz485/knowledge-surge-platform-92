@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { UserCircle2, Plus, Search, ShieldAlert, Calendar, MessageCircle, Send, Check, HelpCircle } from "lucide-react";
@@ -12,7 +11,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { UserRole, Doubt } from "@/types/test";
 
-// Sample data
 const initialDoubts: Doubt[] = [
   {
     id: "1",
@@ -98,7 +96,7 @@ const DoubtsContent = ({ userRole }: DoubtsContentProps) => {
     const newDoubt: Doubt = {
       id: (doubts.length + 1).toString(),
       question: values.question,
-      askedBy: "CurrentUser", // In a real app, this would be the current user
+      askedBy: "CurrentUser",
       date: new Date().toISOString().split('T')[0].replace(/-/g, '/'),
       subject: values.subject,
       status: "pending"
@@ -128,7 +126,7 @@ const DoubtsContent = ({ userRole }: DoubtsContentProps) => {
     const answer = {
       id: `${currentDoubt.id}a${(currentDoubt.answers?.length || 0) + 1}`,
       text: values.answer,
-      answeredBy: "LAKSHYA Instructor", // In a real app, this would be the current admin user
+      answeredBy: "LAKSHYA Instructor",
       date: new Date().toISOString().split('T')[0].replace(/-/g, '/')
     };
     
@@ -267,66 +265,68 @@ const DoubtsContent = ({ userRole }: DoubtsContentProps) => {
             <DialogHeader>
               <DialogTitle>Ask a Question</DialogTitle>
             </DialogHeader>
-            <form onSubmit={doubtForm.handleSubmit(handleSaveDoubt)} className="space-y-4">
-              <FormField
-                control={doubtForm.control}
-                name="subject"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subject</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
+            <Form {...doubtForm}>
+              <form onSubmit={doubtForm.handleSubmit(handleSaveDoubt)} className="space-y-4">
+                <FormField
+                  control={doubtForm.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subject</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a subject" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Physics">Physics</SelectItem>
+                          <SelectItem value="Chemistry">Chemistry</SelectItem>
+                          <SelectItem value="Mathematics">Mathematics</SelectItem>
+                          <SelectItem value="Biology">Biology</SelectItem>
+                          <SelectItem value="General">General</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={doubtForm.control}
+                  name="question"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Question</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a subject" />
-                        </SelectTrigger>
+                        <Textarea 
+                          placeholder="Type your question here..." 
+                          className="min-h-[120px]" 
+                          {...field} 
+                          required 
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
-                        <SelectItem value="Biology">Biology</SelectItem>
-                        <SelectItem value="General">General</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={doubtForm.control}
-                name="question"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Your Question</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Type your question here..." 
-                        className="min-h-[120px]" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-primary">
-                  <Send className="h-4 w-4 mr-2" />
-                  Submit Question
-                </Button>
-              </div>
-            </form>
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-primary">
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit Question
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
         
@@ -344,39 +344,41 @@ const DoubtsContent = ({ userRole }: DoubtsContentProps) => {
                 <span>Asked by: {currentDoubt?.askedBy}</span>
               </div>
             </div>
-            <form onSubmit={answerForm.handleSubmit(handleSubmitAnswer)} className="space-y-4">
-              <FormField
-                control={answerForm.control}
-                name="answer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Your Answer</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Type your answer here..." 
-                        className="min-h-[150px]" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAnswerDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
-                  <Send className="h-4 w-4 mr-2" />
-                  Submit Answer
-                </Button>
-              </div>
-            </form>
+            <Form {...answerForm}>
+              <form onSubmit={answerForm.handleSubmit(handleSubmitAnswer)} className="space-y-4">
+                <FormField
+                  control={answerForm.control}
+                  name="answer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Answer</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Type your answer here..." 
+                          className="min-h-[150px]" 
+                          {...field} 
+                          required 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsAnswerDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit Answer
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </main>
