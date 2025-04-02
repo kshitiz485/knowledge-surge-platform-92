@@ -11,15 +11,18 @@ import {
   LayoutDashboard, 
   Megaphone, 
   ClipboardList, 
+  CalendarPlus,
   Video, 
   BookOpen, 
   LineChart, 
   HelpCircle, 
   Settings 
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const AppSidebar = () => {
+  const location = useLocation();
+  
   return (
     <Sidebar className="bg-gradient-to-br from-primary to-secondary text-white">
       <SidebarHeader className="border-b border-white/10 pb-4">
@@ -28,15 +31,15 @@ const AppSidebar = () => {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive tooltip="Overview">
+            <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"} tooltip="Overview">
               <Link to="/dashboard">
-                <LayoutDashboard className="text-gold" />
+                <LayoutDashboard className={location.pathname === "/dashboard" ? "text-gold" : ""} />
                 <span>Overview</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Announcements">
+            <SidebarMenuButton asChild isActive={location.pathname === "/announcements"} tooltip="Announcements">
               <Link to="/announcements">
                 <Megaphone />
                 <span>Announcements</span>
@@ -44,7 +47,7 @@ const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Tests">
+            <SidebarMenuButton asChild isActive={location.pathname === "/tests"} tooltip="Tests">
               <Link to="/tests">
                 <ClipboardList />
                 <span>Tests</span>
@@ -52,7 +55,15 @@ const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Videos">
+            <SidebarMenuButton asChild isActive={location.pathname === "/test-management"} tooltip="Test Management">
+              <Link to="/test-management">
+                <CalendarPlus className={location.pathname === "/test-management" ? "text-gold" : ""} />
+                <span>Test Management</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={location.pathname === "/videos"} tooltip="Videos">
               <Link to="/videos">
                 <Video />
                 <span>Videos</span>
@@ -60,7 +71,7 @@ const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Study Material">
+            <SidebarMenuButton asChild isActive={location.pathname === "/study-material"} tooltip="Study Material">
               <Link to="/study-material">
                 <BookOpen />
                 <span>Study Material</span>
@@ -68,7 +79,7 @@ const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Performance">
+            <SidebarMenuButton asChild isActive={location.pathname === "/performance"} tooltip="Performance">
               <Link to="/performance">
                 <LineChart />
                 <span>Performance</span>
@@ -76,7 +87,7 @@ const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Doubts">
+            <SidebarMenuButton asChild isActive={location.pathname === "/doubts"} tooltip="Doubts">
               <Link to="/doubts">
                 <HelpCircle />
                 <span>Doubts</span>
@@ -84,7 +95,7 @@ const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
+            <SidebarMenuButton asChild isActive={location.pathname === "/settings"} tooltip="Settings">
               <Link to="/settings">
                 <Settings />
                 <span>Settings</span>
