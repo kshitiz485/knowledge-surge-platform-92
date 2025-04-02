@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 // Import Supabase client
-import { supabaseClient } from "@/lib/supabase";
+import { supabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,9 +26,16 @@ const AuthModal = ({ isOpen, onClose, initialView = "login" }: AuthModalProps) =
   const [otp, setOtp] = useState("");
   const [showOtp, setShowOtp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const supabaseConfigured = isSupabaseConfigured();
 
   const handleEmailSignIn = async () => {
     try {
+      if (!supabaseConfigured) {
+        toast.error("Supabase is not configured. Please connect to Supabase from the Lovable interface.");
+        return;
+      }
+      
       setIsLoading(true);
       
       if (!email || !password) {
@@ -52,6 +61,11 @@ const AuthModal = ({ isOpen, onClose, initialView = "login" }: AuthModalProps) =
 
   const handleEmailSignUp = async () => {
     try {
+      if (!supabaseConfigured) {
+        toast.error("Supabase is not configured. Please connect to Supabase from the Lovable interface.");
+        return;
+      }
+      
       setIsLoading(true);
       
       if (!email || !password) {
@@ -80,6 +94,11 @@ const AuthModal = ({ isOpen, onClose, initialView = "login" }: AuthModalProps) =
 
   const handleGoogleSignIn = async () => {
     try {
+      if (!supabaseConfigured) {
+        toast.error("Supabase is not configured. Please connect to Supabase from the Lovable interface.");
+        return;
+      }
+      
       setIsLoading(true);
       
       const { error } = await supabaseClient.auth.signInWithOAuth({
@@ -130,6 +149,17 @@ const AuthModal = ({ isOpen, onClose, initialView = "login" }: AuthModalProps) =
           </DialogTitle>
         </DialogHeader>
         
+        {!supabaseConfigured && (
+          <div className="px-6 pb-4">
+            <Alert variant="destructive" className="bg-amber-50 text-amber-800 border-amber-300">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-sm">
+                Supabase is not configured. Connect to Supabase from the Lovable interface to enable authentication.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6 rounded-none border-b">
             <TabsTrigger value="login" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-gold">Login</TabsTrigger>
@@ -168,7 +198,7 @@ const AuthModal = ({ isOpen, onClose, initialView = "login" }: AuthModalProps) =
               <Button 
                 className="w-full bg-primary hover:bg-secondary text-white" 
                 onClick={handleEmailSignIn}
-                disabled={isLoading}
+                disabled={isLoading || !supabaseConfigured}
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
