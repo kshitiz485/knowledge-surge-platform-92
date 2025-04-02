@@ -226,71 +226,73 @@ const AnnouncementsContent = ({ userRole }: AnnouncementsContentProps) => {
             <DialogHeader>
               <DialogTitle>{currentAnnouncement ? "Edit Announcement" : "Add New Announcement"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(handleSaveAnnouncement)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Announcement title" {...field} required />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Content</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Announcement content" 
-                        className="min-h-[120px]" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="important"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox 
-                        checked={field.value} 
-                        onCheckedChange={field.onChange} 
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Mark as Important
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-primary">
-                  {currentAnnouncement ? "Update" : "Create"}
-                </Button>
-              </div>
-            </form>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSaveAnnouncement)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Announcement title" {...field} required />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Content</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Announcement content" 
+                          className="min-h-[120px]" 
+                          {...field} 
+                          required 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="important"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox 
+                          checked={field.value} 
+                          onCheckedChange={field.onChange} 
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Mark as Important
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-primary">
+                    {currentAnnouncement ? "Update" : "Create"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </main>
@@ -299,3 +301,4 @@ const AnnouncementsContent = ({ userRole }: AnnouncementsContentProps) => {
 };
 
 export default AnnouncementsContent;
+

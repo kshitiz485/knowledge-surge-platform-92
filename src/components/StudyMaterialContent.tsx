@@ -261,123 +261,125 @@ const StudyMaterialContent = ({ userRole }: StudyMaterialContentProps) => {
             <DialogHeader>
               <DialogTitle>{currentMaterial ? "Edit Study Material" : "Add New Study Material"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(handleSaveMaterial)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Study material title" {...field} required />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Study material description" 
-                        className="min-h-[80px]" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="fileUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>File URL</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="URL to the file" 
-                        {...field} 
-                        required 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSaveMaterial)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="subject"
+                  name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subject</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a subject" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Physics">Physics</SelectItem>
-                          <SelectItem value="Chemistry">Chemistry</SelectItem>
-                          <SelectItem value="Mathematics">Mathematics</SelectItem>
-                          <SelectItem value="Biology">Biology</SelectItem>
-                          <SelectItem value="General">General</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Study material title" {...field} required />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
                 
                 <FormField
                   control={form.control}
-                  name="fileType"
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>File Type</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select file type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="pdf">PDF</SelectItem>
-                          <SelectItem value="doc">DOC</SelectItem>
-                          <SelectItem value="ppt">PPT</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Study material description" 
+                          className="min-h-[80px]" 
+                          {...field} 
+                          required 
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-primary">
-                  {currentMaterial ? "Update" : "Add"}
-                </Button>
-              </div>
-            </form>
+                
+                <FormField
+                  control={form.control}
+                  name="fileUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>File URL</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="URL to the file" 
+                          {...field} 
+                          required 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a subject" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Physics">Physics</SelectItem>
+                            <SelectItem value="Chemistry">Chemistry</SelectItem>
+                            <SelectItem value="Mathematics">Mathematics</SelectItem>
+                            <SelectItem value="Biology">Biology</SelectItem>
+                            <SelectItem value="General">General</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="fileType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>File Type</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select file type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pdf">PDF</SelectItem>
+                            <SelectItem value="doc">DOC</SelectItem>
+                            <SelectItem value="ppt">PPT</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-primary">
+                    {currentMaterial ? "Update" : "Add"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </main>
@@ -386,3 +388,4 @@ const StudyMaterialContent = ({ userRole }: StudyMaterialContentProps) => {
 };
 
 export default StudyMaterialContent;
+
