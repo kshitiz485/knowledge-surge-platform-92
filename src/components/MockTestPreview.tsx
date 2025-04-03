@@ -42,6 +42,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [showSolution, setShowSolution] = useState(false);
 
   // Initialize question status
   useEffect(() => {
@@ -56,6 +57,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
       setCurrentQuestionIndex(0);
       setIsSubmitted(false);
       setTestResult(null);
+      setShowSolution(false);
       
       // Reset and start timer
       setTimeRemaining(3600);
@@ -70,6 +72,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
         });
       }, 1000);
       
+      // Store the interval ID
       setTimerInterval(interval);
       
       return () => {
@@ -112,6 +115,11 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
     }
   };
 
+  // Toggle solution visibility
+  const handleToggleSolution = () => {
+    setShowSolution(!showSolution);
+  };
+
   // Handle test submission
   const handleSubmitTest = () => {
     if (timerInterval) clearInterval(timerInterval);
@@ -130,7 +138,9 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
         unattempted++;
         updatedStatus[index].isCorrect = null;
       } else {
-        const isCorrect = status.selectedOption === question.correctOption;
+        // Find the correct option
+        const correctOption = question.options.find(opt => opt.isCorrect)?.id;
+        const isCorrect = status.selectedOption === correctOption;
         updatedStatus[index].isCorrect = isCorrect;
         
         if (isCorrect) {
@@ -169,6 +179,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
 
   const currentQuestion = questions[currentQuestionIndex];
   const currentStatus = questionStatus[currentQuestionIndex];
+  const correctOptionId = currentQuestion.options.find(opt => opt.isCorrect)?.id;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -244,7 +255,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
                         ? 'bg-red-100 border-red-300'
                         : ''
                     } ${
-                      isSubmitted && currentQuestion.correctOption === option.id
+                      (isSubmitted || showSolution) && option.isCorrect
                         ? 'bg-green-100 border-green-300'
                         : ''
                     }`}
@@ -254,6 +265,13 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
                   </div>
                 ))}
               </div>
+
+              {showSolution && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-semibold text-green-800 mb-2">Solution:</h4>
+                  <p>The correct answer is: {currentQuestion.options.find(opt => opt.isCorrect)?.text}</p>
+                </div>
+              )}
             </div>
             
             <div className="flex justify-between mt-4">
@@ -263,6 +281,13 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
                 variant="outline"
               >
                 Previous
+              </Button>
+              
+              <Button 
+                onClick={handleToggleSolution}
+                variant="secondary"
+              >
+                {showSolution ? "Hide Solution" : "Show Solution"}
               </Button>
               
               <Button 

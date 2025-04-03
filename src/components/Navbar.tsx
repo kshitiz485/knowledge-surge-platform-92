@@ -37,6 +37,10 @@ const Navbar = () => {
     }
   };
 
+  // Check if the current user is an admin
+  const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
+  const isAdmin = userRole === "ADMIN";
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary to-secondary shadow-md border-b border-white/10">
       <div className="container mx-auto px-4 md:px-6">
@@ -53,14 +57,6 @@ const Navbar = () => {
                 className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
               >
                 Courses
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/vidyapeeth" 
-                className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
-              >
-                VidyaPeeth
               </Link>
             </li>
             <li>
@@ -87,6 +83,17 @@ const Navbar = () => {
                   className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
                 >
                   Dashboard
+                </Link>
+              </li>
+            )}
+            {/* Only show Test Management link for admins */}
+            {isAdmin && (
+              <li>
+                <Link 
+                  to="/test-management" 
+                  className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
+                >
+                  Test Management
                 </Link>
               </li>
             )}
@@ -149,15 +156,6 @@ const Navbar = () => {
             </li>
             <li>
               <Link 
-                to="/vidyapeeth" 
-                className="text-white hover:text-gold transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                VidyaPeeth
-              </Link>
-            </li>
-            <li>
-              <Link 
                 to="/mentorship" 
                 className="text-white hover:text-gold transition-colors duration-300"
                 onClick={() => setIsMenuOpen(false)}
@@ -183,6 +181,18 @@ const Navbar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
+                </Link>
+              </li>
+            )}
+            {/* Only show Test Management link for admins in mobile menu */}
+            {isAdmin && (
+              <li>
+                <Link 
+                  to="/test-management" 
+                  className="text-white hover:text-gold transition-colors duration-300"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Test Management
                 </Link>
               </li>
             )}

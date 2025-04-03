@@ -4,19 +4,34 @@ import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
 import {
   Controller,
-  ControllerProps,
-  FieldPath,
-  FieldValues,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
   FormProvider,
   useFormContext,
-  FieldError,
-  FormState,
+  type FormState,
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
 const Form = FormProvider
+
+// Create a default form state
+const defaultFormState: FormState<FieldValues> = {
+  isDirty: false,
+  isLoading: false,
+  isSubmitted: false,
+  isSubmitSuccessful: false,
+  isSubmitting: false,
+  isValidating: false,
+  submitCount: 0,
+  isValid: false,
+  dirtyFields: {},
+  touchedFields: {},
+  errors: {},
+  defaultValues: {}
+}
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
@@ -42,63 +57,6 @@ const FormField = <
   )
 }
 
-// Create a default form state to use when the context is null
-const defaultFormState: FormState<FieldValues> = {
-  isDirty: false,
-  isLoading: false,
-  isSubmitted: false,
-  isSubmitSuccessful: false,
-  isSubmitting: false,
-  isValidating: false,
-  isValid: false,
-  submitCount: 0,
-  dirtyFields: {},
-  touchedFields: {},
-  errors: {},
-  defaultValues: undefined,
-  disabled: false,
-  validatingFields: {}
-}
-
-type FormFieldState = {
-  invalid: boolean
-  isDirty: boolean
-  isTouched: boolean
-  isValidating: boolean
-  error?: FieldError
-  id: string
-  name: string
-  formItemId: string
-  formDescriptionId: string
-  formMessageId: string
-}
-
-const useFormField = () => {
-  const fieldContext = React.useContext(FormFieldContext)
-  const itemContext = React.useContext(FormItemContext)
-  const formContext = useFormContext()
-
-  const fieldState = formContext?.getFieldState?.(fieldContext.name, formContext.formState) || {}
-
-  if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>")
-  }
-
-  const { id } = itemContext
-
-  // Create a combined state object with all properties
-  const combinedState: FormFieldState = {
-    id,
-    name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
-    ...fieldState,
-  }
-
-  return combinedState
-}
-
 type FormItemContextValue = {
   id: string
 }
@@ -106,6 +64,47 @@ type FormItemContextValue = {
 const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue
 )
+
+const useFormField = () => {
+  const fieldContext = React.useContext(FormFieldContext)
+  const itemContext = React.useContext(FormItemContext)
+  const formContext = useFormContext();
+
+  if (!fieldContext) {
+    return {
+      id: itemContext?.id ?? "",
+      name: "",
+      formItemId: "",
+      formDescriptionId: "",
+      formMessageId: "",
+    }
+  }
+
+  // Handle case when formContext is null or undefined
+  if (!formContext) {
+    return {
+      id: itemContext?.id ?? "",
+      name: fieldContext.name,
+      formItemId: `${itemContext?.id}-form-item`,
+      formDescriptionId: `${itemContext?.id}-form-item-description`,
+      formMessageId: `${itemContext?.id}-form-item-message`,
+    }
+  }
+
+  const { getFieldState, formState } = formContext;
+  const fieldState = getFieldState(fieldContext.name, formState || defaultFormState);
+
+  const { id } = itemContext;
+
+  return {
+    id,
+    name: fieldContext.name,
+    formItemId: `${id}-form-item`,
+    formDescriptionId: `${id}-form-item-description`,
+    formMessageId: `${id}-form-item-message`,
+    ...fieldState,
+  }
+}
 
 const FormItem = React.forwardRef<
   HTMLDivElement,

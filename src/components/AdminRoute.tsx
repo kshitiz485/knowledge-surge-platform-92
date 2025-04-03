@@ -10,9 +10,15 @@ interface AdminRouteProps {
 const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading } = useAuth();
   
-  // Get user role from the app_metadata (default to "USER" if not found)
+  // Get user id and user role from the app_metadata (default to "USER" if not found)
+  const userId = user?.id;
   const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
-  const isAdmin = userRole === "ADMIN";
+  
+  // Only allow specific user ID to access admin pages
+  // Replace this with your actual user ID - hard-coded for simplicity, in production
+  // you would store admin IDs in a database
+  const adminUserId = "your-user-id"; // Replace with your actual user ID
+  const isAdmin = userRole === "ADMIN" || userId === adminUserId;
 
   // Show loading state
   if (isLoading) {

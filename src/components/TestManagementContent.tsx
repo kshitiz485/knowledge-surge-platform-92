@@ -10,6 +10,7 @@ import TestScheduleDialog from "./TestScheduleDialog";
 import TestQuestionForm, { Question } from "./TestQuestionForm";
 import MockTestPreview from "./MockTestPreview";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Sample data
 const initialTestSchedules: TestSchedule[] = [
@@ -46,8 +47,10 @@ const initialTestSchedules: TestSchedule[] = [
 ];
 
 const TestManagementContent = () => {
-  // Always admin in this view since we're using AdminRoute
-  const userRole: UserRole = "ADMIN";
+  const { user } = useAuth();
+  
+  // Get user role from the app_metadata (default to "USER" if not found)
+  const userRole: UserRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
   
   const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
   const [searchQuery, setSearchQuery] = useState("");
