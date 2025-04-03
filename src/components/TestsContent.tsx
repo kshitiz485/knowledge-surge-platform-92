@@ -1,7 +1,9 @@
 
 import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { UserCircle2 } from "lucide-react";
+import { UserCircle2, Home } from "lucide-react";
 import TestCard from "./TestCard";
+import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
 
 const TestsContent = () => {
   return (
@@ -11,9 +13,17 @@ const TestsContent = () => {
           <SidebarTrigger className="text-primary" />
           <h1 className="text-2xl font-playfair text-primary">Tests</h1>
         </div>
-        <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
-          <UserCircle2 className="text-gold h-5 w-5" />
-          <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+        <div className="flex items-center gap-4">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
+            <UserCircle2 className="text-gold h-5 w-5" />
+            <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+          </div>
         </div>
       </header>
       

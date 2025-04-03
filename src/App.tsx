@@ -16,6 +16,7 @@ import Announcements from "./pages/Announcements";
 import Videos from "./pages/Videos";
 import StudyMaterial from "./pages/StudyMaterial";
 import Doubts from "./pages/Doubts";
+import Performance from "./pages/Performance";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Doubts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/performance"
+              element={
+                <ProtectedRoute>
+                  <Performance />
                 </ProtectedRoute>
               }
             />

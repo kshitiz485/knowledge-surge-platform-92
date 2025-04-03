@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { UserCircle2, Plus, Search, ShieldAlert } from "lucide-react";
+import { UserCircle2, Plus, Search, ShieldAlert, Home } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { TestSchedule, UserRole } from "@/types/test";
@@ -11,8 +10,8 @@ import TestQuestionForm, { Question } from "./TestQuestionForm";
 import MockTestPreview from "./MockTestPreview";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
-// Sample data
 const initialTestSchedules: TestSchedule[] = [
   {
     id: "1",
@@ -49,7 +48,6 @@ const initialTestSchedules: TestSchedule[] = [
 const TestManagementContent = () => {
   const { user } = useAuth();
   
-  // Get user role from the app_metadata (default to "USER" if not found)
   const userRole: UserRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
   
   const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
@@ -72,23 +70,20 @@ const TestManagementContent = () => {
 
   const handleSaveTest = (test: TestSchedule) => {
     if (currentTest) {
-      // Edit existing test
       setTestSchedules(testSchedules.map(t => 
         t.id === test.id ? test : t
       ));
       toast.success("Test updated successfully");
       setIsDialogOpen(false);
     } else {
-      // Add new test
       const newTest = {
         ...test,
-        id: (testSchedules.length + 1).toString() // Simple ID generation
+        id: (testSchedules.length + 1).toString()
       };
       setTestSchedules([...testSchedules, newTest]);
       toast.success("New test created successfully");
       setIsDialogOpen(false);
       
-      // Open the question form after creating a new test
       setCurrentTest(newTest);
       setIsQuestionFormOpen(true);
     }
@@ -127,9 +122,17 @@ const TestManagementContent = () => {
             <span className="text-xs font-semibold">Admin Only</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
-          <UserCircle2 className="text-gold h-5 w-5" />
-          <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+        <div className="flex items-center gap-4">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
+            <UserCircle2 className="text-gold h-5 w-5" />
+            <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+          </div>
         </div>
       </header>
       
@@ -165,7 +168,6 @@ const TestManagementContent = () => {
           test={currentTest} 
         />
 
-        {/* Question Forms */}
         {currentTest && (
           <>
             <TestQuestionForm

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Image } from "lucide-react";
 import { toast } from "sonner";
 
 export interface Option {
@@ -19,6 +19,7 @@ export interface Question {
   text: string;
   options: Option[];
   subject: "physics" | "chemistry" | "mathematics";
+  imageUrl?: string;
 }
 
 interface TestQuestionFormProps {
@@ -39,13 +40,21 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       { id: "C", text: "", isCorrect: false },
       { id: "D", text: "", isCorrect: false },
     ],
-    subject: "physics"
+    subject: "physics",
+    imageUrl: ""
   });
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCurrentQuestion({
       ...currentQuestion,
       text: e.target.value
+    });
+  };
+
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentQuestion({
+      ...currentQuestion,
+      imageUrl: e.target.value
     });
   };
 
@@ -105,7 +114,8 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
         { id: "C", text: "", isCorrect: false },
         { id: "D", text: "", isCorrect: false },
       ],
-      subject: currentQuestion.subject
+      subject: currentQuestion.subject,
+      imageUrl: ""
     });
 
     toast.success("Question added");
@@ -131,6 +141,14 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
 
     onPreview(questions);
   };
+
+  // Sample images for demonstration
+  const sampleImages = [
+    "/placeholder.svg",
+    "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=500",
+    "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=500",
+    "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500"
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -167,6 +185,67 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
               onChange={handleQuestionChange}
               className="min-h-[100px]"
             />
+          </div>
+
+          {/* Image URL input */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL (Optional)</Label>
+            <div className="flex gap-2">
+              <Input 
+                id="imageUrl"
+                placeholder="Enter image URL or choose from samples below"
+                value={currentQuestion.imageUrl || ""}
+                onChange={handleImageUrlChange}
+                className="flex-grow"
+              />
+            </div>
+            
+            {/* Sample images */}
+            <div className="mt-2">
+              <Label className="text-sm text-gray-500 mb-2 block">Sample Images:</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {sampleImages.map((url, index) => (
+                  <button 
+                    key={index}
+                    type="button"
+                    className={`p-1 border rounded-md hover:border-primary transition-all ${currentQuestion.imageUrl === url ? 'border-primary-500 ring-2 ring-primary-200' : 'border-gray-200'}`}
+                    onClick={() => setCurrentQuestion({...currentQuestion, imageUrl: url})}
+                  >
+                    <img 
+                      src={url} 
+                      alt={`Sample ${index + 1}`} 
+                      className="h-16 w-full object-cover rounded"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Preview of selected image */}
+            {currentQuestion.imageUrl && (
+              <div className="mt-3 border rounded-md p-2">
+                <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
+                <div className="relative">
+                  <img 
+                    src={currentQuestion.imageUrl} 
+                    alt="Question illustration" 
+                    className="max-h-48 mx-auto object-contain"
+                    onError={() => {
+                      toast.error("Failed to load image");
+                      setCurrentQuestion({...currentQuestion, imageUrl: ""});
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2 bg-white/80"
+                    onClick={() => setCurrentQuestion({...currentQuestion, imageUrl: ""})}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Options */}
@@ -210,12 +289,21 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
               <div className="space-y-2 mt-2">
                 {questions.map((q, index) => (
                   <div key={q.id} className="p-3 border rounded-md flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">
-                        <span className="text-gold">{index + 1}.</span> {q.text.substring(0, 60)}
-                        {q.text.length > 60 ? "..." : ""}
-                      </p>
-                      <p className="text-sm text-gray-500">Subject: {q.subject}</p>
+                    <div className="flex items-start gap-3 flex-1">
+                      {q.imageUrl && (
+                        <img 
+                          src={q.imageUrl} 
+                          alt="" 
+                          className="h-12 w-12 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">
+                          <span className="text-gold">{index + 1}.</span> {q.text.substring(0, 60)}
+                          {q.text.length > 60 ? "..." : ""}
+                        </p>
+                        <p className="text-sm text-gray-500">Subject: {q.subject}</p>
+                      </div>
                     </div>
                     <Button 
                       variant="ghost" 
