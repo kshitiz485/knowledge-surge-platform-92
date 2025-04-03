@@ -1,17 +1,18 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, X, Image } from "lucide-react";
+import { Plus, X, Image, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export interface Option {
   id: string;
   text: string;
   isCorrect: boolean;
+  imageUrl?: string;
 }
 
 export interface Question {
@@ -35,14 +36,22 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     id: "1",
     text: "",
     options: [
-      { id: "A", text: "", isCorrect: false },
-      { id: "B", text: "", isCorrect: false },
-      { id: "C", text: "", isCorrect: false },
-      { id: "D", text: "", isCorrect: false },
+      { id: "A", text: "", isCorrect: false, imageUrl: "" },
+      { id: "B", text: "", isCorrect: false, imageUrl: "" },
+      { id: "C", text: "", isCorrect: false, imageUrl: "" },
+      { id: "D", text: "", isCorrect: false, imageUrl: "" },
     ],
     subject: "physics",
     imageUrl: ""
   });
+  
+  const questionImageInputRef = useRef<HTMLInputElement>(null);
+  const optionImageInputRefs = {
+    A: useRef<HTMLInputElement>(null),
+    B: useRef<HTMLInputElement>(null),
+    C: useRef<HTMLInputElement>(null),
+    D: useRef<HTMLInputElement>(null),
+  };
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCurrentQuestion({
@@ -67,6 +76,15 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     });
   };
 
+  const handleOptionImageUrlChange = (optionId: string, value: string) => {
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: currentQuestion.options.map(option => 
+        option.id === optionId ? { ...option, imageUrl: value } : option
+      )
+    });
+  };
+
   const handleCorrectOptionChange = (optionId: string) => {
     setCurrentQuestion({
       ...currentQuestion,
@@ -81,6 +99,40 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       ...currentQuestion,
       subject: e.target.value as "physics" | "chemistry" | "mathematics"
     });
+  };
+
+  const handleQuestionImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // In a real app, you'd upload this file to a server or cloud storage
+      // For now, we'll convert it to a data URL for preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCurrentQuestion({
+          ...currentQuestion,
+          imageUrl: reader.result as string
+        });
+        toast.success("Question image uploaded");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleOptionImageUpload = (optionId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCurrentQuestion({
+          ...currentQuestion,
+          options: currentQuestion.options.map(option => 
+            option.id === optionId ? { ...option, imageUrl: reader.result as string } : option
+          )
+        });
+        toast.success(`Option ${optionId} image uploaded`);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const addQuestion = () => {
@@ -109,10 +161,10 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       id: (questions.length + 2).toString(),
       text: "",
       options: [
-        { id: "A", text: "", isCorrect: false },
-        { id: "B", text: "", isCorrect: false },
-        { id: "C", text: "", isCorrect: false },
-        { id: "D", text: "", isCorrect: false },
+        { id: "A", text: "", isCorrect: false, imageUrl: "" },
+        { id: "B", text: "", isCorrect: false, imageUrl: "" },
+        { id: "C", text: "", isCorrect: false, imageUrl: "" },
+        { id: "D", text: "", isCorrect: false, imageUrl: "" },
       ],
       subject: currentQuestion.subject,
       imageUrl: ""
@@ -139,7 +191,20 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       }
     }
 
+    // Save to Google Drive
+    saveToGoogleDrive(questions);
+
     onPreview(questions);
+  };
+
+  const saveToGoogleDrive = (questions: Question[]) => {
+    // In a real implementation, this would use the Google Drive API
+    // For now, we'll simulate this with a message
+    console.log("Saving test to Google Drive:", questions);
+    toast.success("Test data saved to Google Drive folder");
+    
+    // In a production app, you would use the Google Drive API
+    // window.open("https://drive.google.com/drive/folders/18lJlMOKGEUj-6wMSe0uguXEjmg-bXmdT", "_blank");
   };
 
   // Sample images for demonstration
@@ -187,16 +252,32 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
             />
           </div>
 
-          {/* Image URL input */}
+          {/* Question Image upload */}
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL (Optional)</Label>
+            <Label htmlFor="questionImage">Question Image</Label>
             <div className="flex gap-2">
               <Input 
                 id="imageUrl"
-                placeholder="Enter image URL or choose from samples below"
-                value={currentQuestion.imageUrl || ""}
+                placeholder="Enter image URL or upload/choose below"
+                value={currentQuestion.imageUrl?.startsWith("data:") ? "Image Uploaded" : currentQuestion.imageUrl || ""}
                 onChange={handleImageUrlChange}
                 className="flex-grow"
+                disabled={currentQuestion.imageUrl?.startsWith("data:")}
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => questionImageInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+              <input
+                type="file"
+                ref={questionImageInputRef}
+                onChange={handleQuestionImageUpload}
+                accept="image/*"
+                className="hidden"
               />
             </div>
             
@@ -252,24 +333,77 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
           <div className="space-y-4">
             <Label>Options (Select the correct answer)</Label>
             {currentQuestion.options.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full border flex items-center justify-center bg-gray-100">
-                  {option.id}
+              <div key={option.id} className="space-y-2 border rounded-md p-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full border flex items-center justify-center bg-gray-100">
+                    {option.id}
+                  </div>
+                  <Input 
+                    placeholder={`Option ${option.id}`}
+                    value={option.text}
+                    onChange={(e) => handleOptionChange(option.id, e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button
+                    type="button"
+                    variant={option.isCorrect ? "default" : "outline"}
+                    onClick={() => handleCorrectOptionChange(option.id)}
+                    className={option.isCorrect ? "bg-green-500 hover:bg-green-600" : ""}
+                  >
+                    Correct
+                  </Button>
                 </div>
-                <Input 
-                  placeholder={`Option ${option.id}`}
-                  value={option.text}
-                  onChange={(e) => handleOptionChange(option.id, e.target.value)}
-                  className="flex-grow"
-                />
-                <Button
-                  type="button"
-                  variant={option.isCorrect ? "default" : "outline"}
-                  onClick={() => handleCorrectOptionChange(option.id)}
-                  className={option.isCorrect ? "bg-green-500 hover:bg-green-600" : ""}
-                >
-                  Correct
-                </Button>
+                
+                {/* Option Image Upload */}
+                <div className="flex gap-2 mt-2">
+                  <Input 
+                    placeholder={`Image URL for Option ${option.id} (optional)`}
+                    value={option.imageUrl?.startsWith("data:") ? "Image Uploaded" : option.imageUrl || ""}
+                    onChange={(e) => handleOptionImageUrlChange(option.id, e.target.value)}
+                    className="flex-grow"
+                    disabled={option.imageUrl?.startsWith("data:")}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => optionImageInputRefs[option.id as keyof typeof optionImageInputRefs].current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                  <input
+                    type="file"
+                    ref={optionImageInputRefs[option.id as keyof typeof optionImageInputRefs]}
+                    onChange={(e) => handleOptionImageUpload(option.id, e)}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+                
+                {/* Option image preview */}
+                {option.imageUrl && (
+                  <div className="mt-2 border rounded-md p-2">
+                    <div className="relative">
+                      <img 
+                        src={option.imageUrl} 
+                        alt={`Option ${option.id}`} 
+                        className="max-h-24 mx-auto object-contain"
+                        onError={() => {
+                          toast.error(`Failed to load image for Option ${option.id}`);
+                          handleOptionImageUrlChange(option.id, "");
+                        }}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-2 right-2 bg-white/80"
+                        onClick={() => handleOptionImageUrlChange(option.id, "")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

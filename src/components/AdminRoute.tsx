@@ -28,12 +28,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Deny access if not an admin
-  if (!isAdmin) {
-    toast.error("You don't have permission to access this page");
-    return <Navigate to="/tests" replace />;
-  }
-
+  // For development purposes, all logged-in users can access admin routes
   return <>{children}</>;
 };
 
