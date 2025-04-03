@@ -1,12 +1,13 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, X, Image, Upload } from "lucide-react";
+import { Plus, X, Image, Upload, Save, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { saveTestToGoogleDrive } from "@/services/googleDriveService";
 
 export interface Option {
   id: string;
@@ -21,6 +22,9 @@ export interface Question {
   options: Option[];
   subject: "physics" | "chemistry" | "mathematics";
   imageUrl?: string;
+  solution?: string;
+  marks?: number;
+  negativeMarks?: number;
 }
 
 interface TestQuestionFormProps {
@@ -42,7 +46,10 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       { id: "D", text: "", isCorrect: false, imageUrl: "" },
     ],
     subject: "physics",
-    imageUrl: ""
+    imageUrl: "",
+    solution: "",
+    marks: 4,
+    negativeMarks: 1
   });
   
   const questionImageInputRef = useRef<HTMLInputElement>(null);
@@ -53,10 +60,54 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     D: useRef<HTMLInputElement>(null),
   };
 
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    // Load saved questions from localStorage if any
+    const savedQuestions = localStorage.getItem(`test_questions_${testTitle}`);
+    if (savedQuestions) {
+      try {
+        const parsedQuestions = JSON.parse(savedQuestions);
+        setQuestions(parsedQuestions);
+      } catch (error) {
+        console.error("Error parsing saved questions:", error);
+      }
+    }
+  }, [testTitle]);
+
+  // Save questions to localStorage when they change
+  useEffect(() => {
+    if (questions.length > 0) {
+      localStorage.setItem(`test_questions_${testTitle}`, JSON.stringify(questions));
+    }
+  }, [questions, testTitle]);
+
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCurrentQuestion({
       ...currentQuestion,
       text: e.target.value
+    });
+  };
+
+  const handleSolutionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCurrentQuestion({
+      ...currentQuestion,
+      solution: e.target.value
+    });
+  };
+
+  const handleMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setCurrentQuestion({
+      ...currentQuestion,
+      marks: value
+    });
+  };
+
+  const handleNegativeMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setCurrentQuestion({
+      ...currentQuestion,
+      negativeMarks: value
     });
   };
 
@@ -154,7 +205,8 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
 
     // Add question to the list
     const newQuestionId = (questions.length + 1).toString();
-    setQuestions([...questions, { ...currentQuestion, id: newQuestionId }]);
+    const updatedQuestions = [...questions, { ...currentQuestion, id: newQuestionId }];
+    setQuestions(updatedQuestions);
     
     // Reset current question form
     setCurrentQuestion({
@@ -167,15 +219,25 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
         { id: "D", text: "", isCorrect: false, imageUrl: "" },
       ],
       subject: currentQuestion.subject,
-      imageUrl: ""
+      imageUrl: "",
+      solution: "",
+      marks: 4,
+      negativeMarks: 1
     });
 
     toast.success("Question added");
+    
+    // Auto-save to Google Drive
+    saveToGoogleDrive(updatedQuestions);
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id));
+    const updatedQuestions = questions.filter(q => q.id !== id);
+    setQuestions(updatedQuestions);
     toast.success("Question removed");
+    
+    // Auto-save to Google Drive after removing
+    saveToGoogleDrive(updatedQuestions);
   };
 
   const handlePreview = () => {
@@ -197,14 +259,17 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     onPreview(questions);
   };
 
-  const saveToGoogleDrive = (questions: Question[]) => {
-    // In a real implementation, this would use the Google Drive API
-    // For now, we'll simulate this with a message
-    console.log("Saving test to Google Drive:", questions);
-    toast.success("Test data saved to Google Drive folder");
+  const saveToGoogleDrive = async (questions: Question[]) => {
+    // Save test data to Google Drive
+    const saved = await saveTestToGoogleDrive({
+      title: testTitle,
+      questions,
+      lastSaved: new Date().toISOString()
+    });
     
-    // In a production app, you would use the Google Drive API
-    // window.open("https://drive.google.com/drive/folders/18lJlMOKGEUj-6wMSe0uguXEjmg-bXmdT", "_blank");
+    if (saved) {
+      toast.success("Test data saved to Google Drive folder");
+    }
   };
 
   // Sample images for demonstration
@@ -226,18 +291,40 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
         
         <div className="space-y-6">
           {/* Subject selector */}
-          <div className="mb-4">
-            <Label htmlFor="subject">Subject</Label>
-            <select 
-              id="subject"
-              className="w-full p-2 border rounded-md"
-              value={currentQuestion.subject}
-              onChange={handleSubjectChange}
-            >
-              <option value="physics">Physics</option>
-              <option value="chemistry">Chemistry</option>
-              <option value="mathematics">Mathematics</option>
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <select 
+                id="subject"
+                className="w-full p-2 border rounded-md"
+                value={currentQuestion.subject}
+                onChange={handleSubjectChange}
+              >
+                <option value="physics">Physics</option>
+                <option value="chemistry">Chemistry</option>
+                <option value="mathematics">Mathematics</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="marks">Marks</Label>
+              <Input 
+                id="marks"
+                type="number" 
+                min="0"
+                value={currentQuestion.marks} 
+                onChange={handleMarksChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="negativeMarks">Negative Marks</Label>
+              <Input 
+                id="negativeMarks"
+                type="number" 
+                min="0"
+                value={currentQuestion.negativeMarks} 
+                onChange={handleNegativeMarksChange}
+              />
+            </div>
           </div>
 
           {/* Question input */}
@@ -408,13 +495,35 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
             ))}
           </div>
 
-          <Button 
-            onClick={addQuestion} 
-            className="w-full bg-gold hover:bg-gold/90 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Question
-          </Button>
+          {/* Solution or explanation */}
+          <div className="space-y-2">
+            <Label htmlFor="solution">Solution/Explanation</Label>
+            <Textarea
+              id="solution"
+              placeholder="Enter the solution or explanation for this question..."
+              value={currentQuestion.solution || ""}
+              onChange={handleSolutionChange}
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Button 
+              onClick={addQuestion} 
+              className="w-full bg-gold hover:bg-gold/90 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Question
+            </Button>
+            
+            <Button
+              onClick={() => saveToGoogleDrive(questions)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Draft to Google Drive
+            </Button>
+          </div>
 
           {/* Question List */}
           {questions.length > 0 && (
@@ -436,7 +545,10 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                           <span className="text-gold">{index + 1}.</span> {q.text.substring(0, 60)}
                           {q.text.length > 60 ? "..." : ""}
                         </p>
-                        <p className="text-sm text-gray-500">Subject: {q.subject}</p>
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          <span>Subject: {q.subject}</span>
+                          <span>Marks: +{q.marks} / -{q.negativeMarks}</span>
+                        </div>
                       </div>
                     </div>
                     <Button 
@@ -459,6 +571,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
             Cancel
           </Button>
           <Button onClick={handlePreview} className="bg-primary text-white">
+            <Eye className="h-4 w-4 mr-2" />
             Preview Test
           </Button>
         </DialogFooter>

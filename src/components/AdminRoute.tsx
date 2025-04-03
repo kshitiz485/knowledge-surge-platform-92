@@ -7,15 +7,20 @@ interface AdminRouteProps {
   children: React.ReactNode;
 }
 
+// List of default admin emails
+const DEFAULT_ADMIN_EMAILS = [
+  "obistergaming@gmail.com",
+  "kshitiz6000@gmail.com"
+];
+
 const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading } = useAuth();
   
-  // Get user id and user role from the app_metadata (default to "USER" if not found)
-  const userId = user?.id;
-  const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
-  
-  // Any logged in user is considered an admin for development purposes
-  const isAdmin = userRole === "ADMIN" || userId !== undefined;
+  // Check if user email is in the admin list
+  const isAdmin = user?.email && (
+    DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase()) || 
+    (user.app_metadata && user.app_metadata.role === "ADMIN")
+  );
 
   // Show loading state
   if (isLoading) {
@@ -28,7 +33,12 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // For development purposes, all logged-in users can access admin routes
+  // Redirect if authenticated but not an admin
+  if (!isAdmin) {
+    toast.error("You don't have permission to access this page");
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 

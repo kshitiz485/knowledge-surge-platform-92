@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { UserCircle2, Plus, Search, ShieldAlert, Home } from "lucide-react";
+import { UserCircle2, Plus, Search, ShieldAlert, Home, FolderOpen } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { TestSchedule, UserRole } from "@/types/test";
@@ -11,6 +11,7 @@ import MockTestPreview from "./MockTestPreview";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
+import { saveTestToGoogleDrive, openGoogleDriveTestFolder } from "@/services/googleDriveService";
 
 const initialTestSchedules: TestSchedule[] = [
   {
@@ -48,7 +49,11 @@ const initialTestSchedules: TestSchedule[] = [
 const TestManagementContent = () => {
   const { user } = useAuth();
   
+  const DEFAULT_ADMIN_EMAILS = ["obistergaming@gmail.com", "kshitiz6000@gmail.com"];
+  const isDefaultAdmin = user?.email && DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase());
+  
   const userRole: UserRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
+  const isAdmin = isDefaultAdmin || userRole === "ADMIN";
   
   const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,6 +110,10 @@ const TestManagementContent = () => {
     setIsMockTestPreviewOpen(true);
   };
 
+  const handleOpenGoogleDriveFolder = () => {
+    openGoogleDriveTestFolder();
+  };
+
   const filteredTests = testSchedules.filter(test => 
     test.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     test.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,6 +132,15 @@ const TestManagementContent = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2 text-blue-600"
+            onClick={handleOpenGoogleDriveFolder}
+          >
+            <FolderOpen className="h-4 w-4" />
+            <span>Google Drive</span>
+          </Button>
           <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
