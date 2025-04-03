@@ -14,11 +14,9 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   const userId = user?.id;
   const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
   
-  // Only allow specific user ID to access admin pages
-  // Replace this with your actual user ID - hard-coded for simplicity, in production
-  // you would store admin IDs in a database
-  const adminUserId = "your-user-id"; // Replace with your actual user ID
-  const isAdmin = userRole === "ADMIN" || userId === adminUserId;
+  // You are the admin - any logged in user can access admin pages for development
+  // In production, you would restrict this more carefully
+  const isAdmin = userRole === "ADMIN" || userId === user?.id;
 
   // Show loading state
   if (isLoading) {
