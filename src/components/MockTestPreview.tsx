@@ -32,13 +32,7 @@ interface QuestionStatus {
 const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPreviewProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(3600); // 1 hour in seconds
-  const [questionStatus, setQuestionStatus] = useState<QuestionStatus[]>(() => {
-    return questions.map(() => ({
-      isAnswered: false,
-      selectedOption: null,
-      isCorrect: null,
-    }));
-  });
+  const [questionStatus, setQuestionStatus] = useState<QuestionStatus[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
@@ -47,6 +41,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
   // Initialize question status
   useEffect(() => {
     if (isOpen && questions.length > 0) {
+      // Reset all state when dialog opens
       setQuestionStatus(
         questions.map(() => ({
           isAnswered: false,
@@ -80,6 +75,13 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
       };
     }
   }, [isOpen, questions.length]);
+
+  // Safely handle when no questions are available
+  useEffect(() => {
+    if (questions.length === 0) {
+      setQuestionStatus([]);
+    }
+  }, [questions]);
 
   // Format time remaining as MM:SS
   const formatTime = (seconds: number) => {
@@ -124,6 +126,12 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
   const handleSubmitTest = () => {
     if (timerInterval) clearInterval(timerInterval);
     
+    // Check if there are no questions
+    if (questions.length === 0) {
+      setIsSubmitted(true);
+      return;
+    }
+    
     // Calculate results
     let correctAnswers = 0;
     let incorrectAnswers = 0;
@@ -134,9 +142,11 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
     questions.forEach((question, index) => {
       const status = questionStatus[index];
       
-      if (!status.isAnswered) {
+      if (!status || !status.isAnswered) {
         unattempted++;
-        updatedStatus[index].isCorrect = null;
+        if (status) {
+          updatedStatus[index].isCorrect = null;
+        }
       } else {
         // Find the correct option
         const correctOption = question.options.find(opt => opt.isCorrect)?.id;
@@ -153,7 +163,7 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
     
     const totalScore = questions.length * 4;  // 4 points per correct answer
     const score = correctAnswers * 4;
-    const percentage = (score / totalScore) * 100;
+    const percentage = totalScore > 0 ? (score / totalScore) * 100 : 0;
     
     setQuestionStatus(updatedStatus);
     setTestResult({
@@ -175,10 +185,31 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
     onClose();
   };
 
-  if (!isOpen || questions.length === 0) return null;
+  // Guard against empty questions array
+  if (!isOpen) return null;
+  
+  // If no questions are available, show a message
+  if (questions.length === 0) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <div className="flex flex-col items-center justify-center p-4">
+            <h2 className="text-xl font-bold mb-4">{testTitle}</h2>
+            <p className="text-center mb-6">No questions available for this test.</p>
+            <Button onClick={handleClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const currentQuestion = questions[currentQuestionIndex];
-  const currentStatus = questionStatus[currentQuestionIndex];
+  // Safely access the current status, default to a new object if undefined
+  const currentStatus = questionStatus[currentQuestionIndex] || {
+    isAnswered: false,
+    selectedOption: null,
+    isCorrect: null
+  };
   const correctOptionId = currentQuestion.options.find(opt => opt.isCorrect)?.id;
 
   return (
@@ -240,6 +271,21 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
               <div className="p-4 border rounded-lg mb-4">
                 <h3 className="font-semibold mb-2">Question {currentQuestionIndex + 1}:</h3>
                 <p>{currentQuestion.text}</p>
+                
+                {currentQuestion.imageUrl && (
+                  <div className="mt-4">
+                    <img 
+                      src={currentQuestion.imageUrl} 
+                      alt="Question" 
+                      className="max-h-64 mx-auto rounded-lg"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = '/placeholder.svg';
+                      }} 
+                    />
+                  </div>
+                )}
               </div>
               
               <div className="space-y-3">
@@ -270,6 +316,9 @@ const MockTestPreview = ({ isOpen, onClose, questions, testTitle }: MockTestPrev
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-semibold text-green-800 mb-2">Solution:</h4>
                   <p>The correct answer is: {currentQuestion.options.find(opt => opt.isCorrect)?.text}</p>
+                  {currentQuestion.solution && (
+                    <p className="mt-2">{currentQuestion.solution}</p>
+                  )}
                 </div>
               )}
             </div>

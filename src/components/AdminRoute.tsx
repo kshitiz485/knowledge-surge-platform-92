@@ -14,9 +14,8 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   const userId = user?.id;
   const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
   
-  // You are the admin - any logged in user can access admin pages for development
-  // In production, you would restrict this more carefully
-  const isAdmin = userRole === "ADMIN" || userId === user?.id;
+  // Any logged in user is considered an admin for development purposes
+  const isAdmin = userRole === "ADMIN" || userId !== undefined;
 
   // Show loading state
   if (isLoading) {
@@ -25,6 +24,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
 
   // Redirect if not authenticated
   if (!user) {
+    toast.error("Please log in to access this page");
     return <Navigate to="/auth" replace />;
   }
 
