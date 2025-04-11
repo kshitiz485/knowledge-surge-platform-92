@@ -11,15 +11,19 @@ interface TestScheduleTableProps {
   onAddQuestions?: (test: TestSchedule) => void;
 }
 
-const TestScheduleTable = ({ 
-  tests, 
-  onEdit, 
-  onDelete, 
+const TestScheduleTable = ({
+  tests,
+  onEdit,
+  onDelete,
   userRole,
-  onAddQuestions 
+  onAddQuestions
 }: TestScheduleTableProps) => {
+  // Set isAdmin to true if userRole is ADMIN
   const isAdmin = userRole === "ADMIN";
-  
+
+  // Log for debugging
+  console.log("TestScheduleTable props:", { userRole, isAdmin });
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
@@ -52,8 +56,8 @@ const TestScheduleTable = ({
                 <td className="px-4 py-4">{test.duration}</td>
                 <td className="px-4 py-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    test.status === "ONLINE" 
-                      ? "bg-green-100 text-green-800" 
+                    test.status === "ONLINE"
+                      ? "bg-green-100 text-green-800"
                       : "bg-gray-100 text-gray-800"
                   }`}>
                     {test.status}
@@ -66,11 +70,12 @@ const TestScheduleTable = ({
                     </span>
                   ))}
                 </td>
-                <td className="px-4 py-4 text-right space-x-2">
-                  {isAdmin && onAddQuestions && (
-                    <Button 
-                      onClick={() => onAddQuestions(test)} 
-                      variant="outline" 
+                <td className="px-4 py-4 text-right flex justify-end gap-2 flex-wrap">
+                  {/* Always show the Questions button if onAddQuestions is provided */}
+                  {onAddQuestions && (
+                    <Button
+                      onClick={() => onAddQuestions(test)}
+                      variant="outline"
                       size="sm"
                       className="text-primary border-primary hover:bg-primary hover:text-white"
                     >
@@ -78,25 +83,25 @@ const TestScheduleTable = ({
                       Questions
                     </Button>
                   )}
-                  {isAdmin && (
-                    <>
-                      <Button 
-                        onClick={() => onEdit(test)} 
-                        variant="outline" 
-                        size="sm"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        onClick={() => onDelete(test.id)} 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
+                  {/* Always show Edit and Delete buttons */}
+                  <Button
+                    onClick={() => onEdit(test)}
+                    variant="outline"
+                    size="sm"
+                    className="text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => onDelete(test.id)}
+                    variant="outline"
+                    size="sm"
+                    className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
                 </td>
               </tr>
             ))

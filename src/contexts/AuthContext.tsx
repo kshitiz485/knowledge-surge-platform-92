@@ -11,7 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       });
-      
+
       if (error) throw error;
     } catch (error: any) {
       toast.error(error.message || "Error signing in");
@@ -67,9 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: window.location.origin,
         },
       });
-      
+
       if (error) throw error;
-      
+
       toast.success("Check your email for the confirmation link");
     } catch (error: any) {
       toast.error(error.message || "Error signing up");
@@ -91,18 +91,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithGoogle = async () => {
+
+
+  const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
+      setIsLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) throw error;
+
+      toast.success("Password reset instructions sent to your email");
     } catch (error: any) {
-      toast.error(error.message || "Error signing in with Google");
+      toast.error(error.message || "Error sending password reset email");
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signUp,
         signOut,
-        signInWithGoogle,
+        resetPassword,
       }}
     >
       {children}

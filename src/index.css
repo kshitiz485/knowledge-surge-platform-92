@@ -3,6 +3,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fix for time picker dropdown issues */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.select-content,
+.popover-content {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.select-item,
+.select-trigger,
+.select-value {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -25,6 +44,9 @@
 
     --gold: 43 77% 53%;
     --gold-foreground: 240 24% 14%;
+
+    --navy: 240 33% 11%;
+    --navy-foreground: 210 40% 98%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;

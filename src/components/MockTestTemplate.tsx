@@ -4,6 +4,7 @@ import { Question } from './TestQuestionForm';
 import { Button } from './ui/button';
 import { Dialog, DialogContent } from './ui/dialog';
 import { toast } from 'sonner';
+import { parseDurationToSeconds } from '@/lib/utils';
 
 interface MockTestTemplateProps {
   testTitle: string;
@@ -16,30 +17,17 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<string[]>(Array(questions.length).fill(null));
   const [questionStatus, setQuestionStatus] = useState<string[]>(Array(questions.length).fill("not-visited"));
-  const [timeRemaining, setTimeRemaining] = useState<number>(parseTime(testTime));
+  const [timeRemaining, setTimeRemaining] = useState<number>(parseDurationToSeconds(testTime));
   const [activeSubject, setActiveSubject] = useState<string>("all");
   const [showSolution, setShowSolution] = useState(false);
-  
-  // Parse time string to seconds
-  function parseTime(timeString: string): number {
-    const hoursMatch = timeString.match(/(\d+)\s*hours?/i);
-    const minutesMatch = timeString.match(/(\d+)\s*min(ute)?s?/i);
-    
-    let totalSeconds = 0;
-    if (hoursMatch) totalSeconds += parseInt(hoursMatch[1]) * 60 * 60;
-    if (minutesMatch) totalSeconds += parseInt(minutesMatch[1]) * 60;
-    
-    // Default to 3 hours if no valid time is found
-    return totalSeconds || (3 * 60 * 60);
-  }
-  
+
   // Format seconds to MM:SS
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
-  
+
   // Timer functionality
   useEffect(() => {
     const timer = setInterval(() => {
@@ -52,7 +40,7 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
         return prev - 1;
       });
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, []);
 
@@ -64,6 +52,11 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
     }
     setQuestionStatus(newStatus);
   }, [currentQuestionIndex]);
+
+  // Function to check if an element is scrollable
+  const isScrollable = (element: HTMLElement) => {
+    return element.scrollHeight > element.clientHeight;
+  };
 
   // Calculate status counts
   const statusCounts = {
@@ -79,7 +72,7 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
     const newSelectedOptions = [...selectedOptions];
     newSelectedOptions[currentQuestionIndex] = optionId;
     setSelectedOptions(newSelectedOptions);
-    
+
     // Update question status
     const newStatus = [...questionStatus];
     newStatus[currentQuestionIndex] = newStatus[currentQuestionIndex] === "review" ? "review-with-answer" : "answered";
@@ -99,7 +92,7 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
     const newSelectedOptions = [...selectedOptions];
     newSelectedOptions[currentQuestionIndex] = null;
     setSelectedOptions(newSelectedOptions);
-    
+
     // Update question status
     const newStatus = [...questionStatus];
     newStatus[currentQuestionIndex] = newStatus[currentQuestionIndex] === "review-with-answer" ? "review" : "unanswered";
@@ -131,34 +124,63 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
     // Calculate score
     let score = 0;
     let totalMarks = 0;
-    
+
     questions.forEach((question, index) => {
       const selectedOption = selectedOptions[index];
       const correctOption = question.options.find(option => option.isCorrect)?.id;
       const marks = question.marks || 4;
       const negativeMarks = question.negativeMarks || 1;
-      
+
       totalMarks += marks;
-      
+
       if (selectedOption === correctOption) {
         score += marks;
       } else if (selectedOption !== null) {
         score -= negativeMarks;
       }
     });
-    
+
     toast.success(`Test submitted! Score: ${score}/${totalMarks}`);
     onClose();
   };
 
   // Filter questions by subject
-  const filteredQuestions = activeSubject === "all" 
-    ? questions 
+  const filteredQuestions = activeSubject === "all"
+    ? questions
     : questions.filter(q => q.subject === activeSubject);
 
   // Current question
   const currentQuestion = filteredQuestions[currentQuestionIndex];
-  
+
+  // Add scroll detection for question and options
+  useEffect(() => {
+    // Check if question is scrollable
+    const questionElement = document.getElementById('question');
+    if (questionElement) {
+      const questionScrollIndicator = questionElement.querySelector('.scroll-indicator');
+      if (questionScrollIndicator) {
+        if (isScrollable(questionElement)) {
+          questionScrollIndicator.classList.add('has-scroll');
+        } else {
+          questionScrollIndicator.classList.remove('has-scroll');
+        }
+      }
+    }
+
+    // Check if options are scrollable
+    const optionContainers = document.querySelectorAll('.option-container');
+    optionContainers.forEach(container => {
+      const scrollIndicator = container.querySelector('.scroll-indicator');
+      if (scrollIndicator && container instanceof HTMLElement) {
+        if (isScrollable(container)) {
+          scrollIndicator.classList.add('has-scroll');
+        } else {
+          scrollIndicator.classList.remove('has-scroll');
+        }
+      }
+    });
+  }, [currentQuestionIndex, filteredQuestions]);
+
   if (!currentQuestion || questions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6">
@@ -177,16 +199,16 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
           <div className="timer">
             <span id="timer">{Math.floor(timeRemaining / 60)}:{timeRemaining % 60 < 10 ? '0' : ''}{timeRemaining % 60}</span> MIN
           </div>
-          <Button 
+          <Button
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
             onClick={handleSubmit}
           >
             Submit
           </Button>
         </header>
-        
+
         <section className="mb-6 bg-blue-100 p-4 rounded-lg">
-          <select 
+          <select
             className="p-2 rounded-lg"
             value={activeSubject}
             onChange={(e) => setActiveSubject(e.target.value)}
@@ -197,73 +219,82 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
             <option value="mathematics">Mathematics</option>
           </select>
         </section>
-        
+
         <section id="question-container" className="mb-6">
           <div className="flex justify-between">
             <h2 className="text-lg font-medium">
               Question <span id="question-number">{currentQuestionIndex + 1}</span>/{filteredQuestions.length}
             </h2>
-            <div className="bg-gray-200 px-3 py-1 rounded-lg">
-              {currentQuestion.marks || 4} / {currentQuestion.negativeMarks ? `-${currentQuestion.negativeMarks}` : "-1"}
+            <div className="bg-gray-200 px-3 py-1 rounded-lg flex items-center gap-1" title="Marks for correct / negative marks for incorrect">
+              <span className="text-green-600 font-medium">+{currentQuestion.marks || 4}</span> /
+              <span className="text-red-600 font-medium">-{currentQuestion.negativeMarks || 1}</span>
+              <span className="text-xs text-gray-500 ml-1">(marks)</span>
             </div>
           </div>
-          
-          <div id="question" className="mt-4 text-lg font-medium">
+
+          <div id="question" className="mt-4 text-lg font-medium max-h-[200px] overflow-y-auto overflow-x-hidden p-4 border border-gray-200 rounded-lg relative scrollable-container">
+            <div className="scroll-indicator"></div>
             {currentQuestion.text}
           </div>
-          
+
           {currentQuestion.imageUrl && (
             <div className="mt-2 max-w-lg mx-auto">
-              <img 
-                src={currentQuestion.imageUrl} 
-                alt="Question" 
+              <img
+                src={currentQuestion.imageUrl}
+                alt="Question"
                 className="max-h-80 object-contain mx-auto my-4"
               />
             </div>
           )}
-          
+
           <div id="options" className="mt-4">
             {currentQuestion.options.map(option => (
-              <div 
+              <div
                 key={option.id}
-                className={`option-container ${selectedOptions[currentQuestionIndex] === option.id ? 'selected' : ''}`}
+                className={`option-container scrollable-container ${selectedOptions[currentQuestionIndex] === option.id ? 'selected' : ''}`}
                 onClick={() => handleOptionSelect(option.id)}
               >
-                {option.id}) {option.text}
-                {option.imageUrl && (
-                  <img 
-                    src={option.imageUrl} 
-                    alt={`Option ${option.id}`}
-                    className="max-h-24 object-contain ml-4"
-                  />
-                )}
+                <div className="scroll-indicator"></div>
+                <div className="option-letter mr-2 flex-shrink-0">
+                  {option.id})
+                </div>
+                <div className="option-text">
+                  {option.text}
+                  {option.imageUrl && (
+                    <img
+                      src={option.imageUrl}
+                      alt={`Option ${option.id}`}
+                      className="max-h-24 object-contain mt-2"
+                    />
+                  )}
+                </div>
               </div>
             ))}
           </div>
-          
+
           <div className="flex flex-wrap justify-center gap-4 mt-4">
-            <Button 
-              id="mark-review-btn" 
+            <Button
+              id="mark-review-btn"
               className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500"
               onClick={handleMarkForReview}
             >
               Mark Review
             </Button>
-            <Button 
-              id="clear-selection-btn" 
+            <Button
+              id="clear-selection-btn"
               className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500"
               onClick={handleClearSelection}
             >
               Clear Selection
             </Button>
-            <Button 
+            <Button
               className="px-4 py-2 bg-purple-400 text-white rounded-lg hover:bg-purple-500"
               onClick={() => setShowSolution(!showSolution)}
             >
               {showSolution ? "Hide Solution" : "Show Solution"}
             </Button>
           </div>
-          
+
           {showSolution && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
               <h3 className="font-bold text-green-800">Solution:</h3>
@@ -274,18 +305,18 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
             </div>
           )}
         </section>
-        
+
         <footer className="flex justify-between mt-4">
-          <Button 
-            id="prev-btn" 
+          <Button
+            id="prev-btn"
             className="px-4 py-2 bg-yellow-400 rounded-full hover:bg-yellow-500"
             onClick={handlePrevQuestion}
             disabled={currentQuestionIndex === 0}
           >
             ⬅
           </Button>
-          <Button 
-            id="next-btn" 
+          <Button
+            id="next-btn"
             className="px-4 py-2 bg-yellow-400 rounded-full hover:bg-yellow-500"
             onClick={handleNextQuestion}
             disabled={currentQuestionIndex >= filteredQuestions.length - 1}
@@ -299,7 +330,7 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
         <h2 className="text-lg font-bold">Question Status</h2>
         <ul className="grid grid-cols-5 gap-2 mt-4" id="question-status-list">
           {questions.map((q, index) => (
-            <li 
+            <li
               key={index}
               className={`question-status ${questionStatus[index]}`}
               onClick={() => handleGoToQuestion(index)}
@@ -341,7 +372,74 @@ const MockTestTemplate = ({ testTitle, questions, onClose, testTime = "3 hours" 
             cursor: pointer;
             transition: all 0.3s ease-in-out;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
+            max-height: 120px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Scrollbar styling */
+        .option-container::-webkit-scrollbar,
+        #question::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .option-container::-webkit-scrollbar-track,
+        #question::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .option-container::-webkit-scrollbar-thumb,
+        #question::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .option-container::-webkit-scrollbar-thumb:hover,
+        #question::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #3b82f6, #60a5fa);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 0 4px 4px 0;
+            z-index: 10;
+        }
+
+        .scrollable-container {
+            position: relative;
+        }
+
+        .scrollable-container:hover .scroll-indicator.has-scroll {
+            opacity: 0.5;
+        }
+
+        /* Hide scroll indicator when content is not scrollable */
+        .scroll-indicator:not(.has-scroll) {
+            display: none;
+        }
+
+        /* Option letter styling */
+        .option-letter {
+            font-weight: 600;
+            min-width: 20px;
+            padding-top: 2px;
+        }
+
+        /* Option text styling */
+        .option-text {
+            flex: 1;
+            word-break: break-word;
         }
         .option-container:hover {
             background-color: #f3f4f6;
@@ -429,13 +527,13 @@ export interface FullScreenMockTestProps {
 
 const FullScreenMockTest = ({ isOpen, onClose, questions, testTitle, testTime }: FullScreenMockTestProps) => {
   if (!isOpen) return null;
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
-        <MockTestTemplate 
-          testTitle={testTitle} 
-          questions={questions} 
+        <MockTestTemplate
+          testTitle={testTitle}
+          questions={questions}
           onClose={onClose}
           testTime={testTime}
         />

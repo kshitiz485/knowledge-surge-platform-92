@@ -1,13 +1,18 @@
 
-import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 import AnnouncementsContent from "@/components/AnnouncementsContent";
 import { UserRole } from "@/types/test";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Announcements = () => {
-  // In a real application, this would come from an authentication context
-  const [userRole] = useState<UserRole>("ADMIN");
+  const { user } = useAuth();
+
+  // Determine user role based on authentication data
+  const userRole: UserRole = user?.email && (
+    ["obistergaming@gmail.com", "kshitiz6000@gmail.com"].includes(user.email.toLowerCase()) ||
+    (user.app_metadata && user.app_metadata.role === "ADMIN")
+  ) ? "ADMIN" : "USER";
 
   return (
     <SidebarProvider>

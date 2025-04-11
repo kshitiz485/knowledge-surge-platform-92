@@ -5,11 +5,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut } from "lucide-react";
 import AuthModal from "./AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
@@ -37,50 +37,41 @@ const Navbar = () => {
     }
   };
 
-  // If user is logged in, they can access admin features
-  // This is for development purposes, in production you'd want stricter checks
-  const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
-  const isAdmin = userRole === "ADMIN" || !!user;
+  // List of default admin emails
+  const DEFAULT_ADMIN_EMAILS = [
+    "obistergaming@gmail.com",
+    "kshitiz6000@gmail.com"
+  ];
+
+  // Check if user email is in the admin list or has admin role in metadata
+  const isAdmin = user?.email && (
+    DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase()) ||
+    (user.app_metadata && user.app_metadata.role === "ADMIN")
+  );
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary to-secondary shadow-md border-b border-white/10">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-20">
           <div className="font-playfair text-2xl md:text-3xl font-bold gold-gradient">
-            <Link to="/">EduLux</Link>
+            <Link to="/">Kaksha360</Link>
           </div>
 
           {/* Desktop Nav Links */}
           <ul className="hidden md:flex space-x-8">
             <li>
-              <Link 
-                to="/courses" 
+              <Link
+                to="/courses"
                 className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
               >
                 Courses
               </Link>
             </li>
-            <li>
-              <Link 
-                to="/mentorship" 
-                className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
-              >
-                Mentorship
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/resources" 
-                className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
-              >
-                Resources
-              </Link>
-            </li>
             {/* Only show Dashboard link when user is logged in */}
             {user && (
               <li>
-                <Link 
-                  to="/dashboard" 
+                <Link
+                  to="/dashboard"
                   className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
                 >
                   Dashboard
@@ -90,8 +81,8 @@ const Navbar = () => {
             {/* Only show Test Management link for admins */}
             {isAdmin && (
               <li>
-                <Link 
-                  to="/test-management" 
+                <Link
+                  to="/test-management"
                   className="text-white hover:text-gold transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gold after:transition-all hover:after:w-full"
                 >
                   Test Management
@@ -104,8 +95,8 @@ const Navbar = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="hidden md:flex border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
                 >
                   <User className="w-4 h-4 mr-2" />
@@ -123,8 +114,8 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleAuthClick}
               className="hidden md:flex border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
             >
@@ -133,7 +124,7 @@ const Navbar = () => {
           )}
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden text-white"
             onClick={toggleMenu}
           >
@@ -147,37 +138,19 @@ const Navbar = () => {
         <div className="md:hidden bg-secondary py-4 animate-slide-up">
           <ul className="flex flex-col items-center space-y-4 pb-4">
             <li>
-              <Link 
-                to="/courses" 
+              <Link
+                to="/courses"
                 className="text-white hover:text-gold transition-colors duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Courses
               </Link>
             </li>
-            <li>
-              <Link 
-                to="/mentorship" 
-                className="text-white hover:text-gold transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Mentorship
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/resources" 
-                className="text-white hover:text-gold transition-colors duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Resources
-              </Link>
-            </li>
             {/* Only show Dashboard link in mobile menu when user is logged in */}
             {user && (
               <li>
-                <Link 
-                  to="/dashboard" 
+                <Link
+                  to="/dashboard"
                   className="text-white hover:text-gold transition-colors duration-300"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -188,8 +161,8 @@ const Navbar = () => {
             {/* Only show Test Management link for admins in mobile menu */}
             {isAdmin && (
               <li>
-                <Link 
-                  to="/test-management" 
+                <Link
+                  to="/test-management"
                   className="text-white hover:text-gold transition-colors duration-300"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -199,16 +172,16 @@ const Navbar = () => {
             )}
             <li>
               {user ? (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleSignOut}
                   className="border-gold text-gold hover:bg-gold hover:text-primary transition-all duration-300 px-6 rounded-full"
                 >
                   Sign Out
                 </Button>
               ) : (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     navigate("/auth");
                     setIsMenuOpen(false);
@@ -223,9 +196,9 @@ const Navbar = () => {
         </div>
       )}
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </nav>
   );

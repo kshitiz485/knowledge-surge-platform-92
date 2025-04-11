@@ -29,6 +29,135 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      },
+      tests: {
+        Row: {
+          id: string
+          title: string
+          instructor: string
+          date: string
+          time: string
+          duration: string
+          status: string
+          participants: string[] | null
+          created_at: string
+          updated_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          instructor: string
+          date: string
+          time: string
+          duration: string
+          status: string
+          participants?: string[] | null
+          created_at?: string
+          updated_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          instructor?: string
+          date?: string
+          time?: string
+          duration?: string
+          status?: string
+          participants?: string[] | null
+          created_at?: string
+          updated_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tests_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      test_questions: {
+        Row: {
+          id: string
+          test_id: string
+          text: string
+          subject: string
+          image_url: string | null
+          solution: string | null
+          marks: number | null
+          negative_marks: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          test_id: string
+          text: string
+          subject: string
+          image_url?: string | null
+          solution?: string | null
+          marks?: number | null
+          negative_marks?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          test_id?: string
+          text?: string
+          subject?: string
+          image_url?: string | null
+          solution?: string | null
+          marks?: number | null
+          negative_marks?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_questions_test_id_fkey"
+            columns: ["test_id"]
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      test_options: {
+        Row: {
+          id: string
+          question_id: string
+          option_id: string
+          text: string
+          is_correct: boolean
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          option_id: string
+          text: string
+          is_correct: boolean
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          option_id?: string
+          text?: string
+          is_correct?: boolean
+          image_url?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_options_question_id_fkey"
+            columns: ["question_id"]
+            referencedRelation: "test_questions"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

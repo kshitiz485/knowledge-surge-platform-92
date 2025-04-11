@@ -41,6 +41,10 @@ export default {
 					DEFAULT: 'hsl(var(--gold))',
 					foreground: 'hsl(var(--gold-foreground))'
 				},
+				navy: {
+					DEFAULT: 'hsl(var(--navy))',
+					foreground: 'hsl(var(--navy-foreground))'
+				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
@@ -81,7 +85,7 @@ export default {
 					}
 				},
 				'slide-up': {
-					'0%': { 
+					'0%': {
 						opacity: '0',
 						transform: 'translateY(20px)'
 					},

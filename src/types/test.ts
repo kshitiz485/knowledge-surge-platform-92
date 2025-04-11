@@ -8,6 +8,8 @@ export interface TestSchedule {
   duration: string;
   status: "ONLINE" | "OFFLINE";
   participants?: string[];
+  startDateTime?: string; // ISO string for the exact start time
+  endDateTime?: string;   // ISO string for the exact end time
 }
 
 export type UserRole = "ADMIN" | "USER";

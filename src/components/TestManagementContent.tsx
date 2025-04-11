@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { UserCircle2, Plus, Search, ShieldAlert, Home, FolderOpen } from "lucide-react";
 import { Button } from "./ui/button";
@@ -8,60 +8,56 @@ import TestScheduleTable from "./TestScheduleTable";
 import TestScheduleDialog from "./TestScheduleDialog";
 import TestQuestionForm, { Question } from "./TestQuestionForm";
 import MockTestPreview from "./MockTestPreview";
+
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@/contexts/UserContext";
 import { Link } from "react-router-dom";
-import { saveTestToGoogleDrive, openGoogleDriveTestFolder } from "@/services/googleDriveService";
-
-const initialTestSchedules: TestSchedule[] = [
-  {
-    id: "1",
-    title: "JEE Main Test Series - 6 Test Paper (Full Syllabus Test)",
-    instructor: "LAKSHYA",
-    date: "2025/01/20",
-    time: "02:00 PM - 05:00 PM",
-    duration: "3 hours",
-    status: "ONLINE",
-    participants: ["Class 12 - Science"]
-  },
-  {
-    id: "2",
-    title: "12th Class Online Test (P Block Elements) Chemistry",
-    instructor: "LAKSHYA",
-    date: "2025/01/09",
-    time: "07:30 PM - 08:30 PM",
-    duration: "1 hour",
-    status: "ONLINE",
-    participants: ["Class 12 - Science"]
-  },
-  {
-    id: "3",
-    title: "12th Class Online Test (Thermodynamics) Chemistry",
-    instructor: "LAKSHYA",
-    date: "2025/01/08",
-    time: "07:30 PM - 08:30 PM",
-    duration: "1 hour",
-    status: "ONLINE",
-    participants: ["Class 12 - Science"]
-  }
-];
+import { openGoogleDriveTestFolder } from "@/services/googleDriveService";
+import { fetchTests, createTest, updateTest, deleteTest, saveTestQuestions, fetchTestQuestions } from "@/services/testService";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
 const TestManagementContent = () => {
   const { user } = useAuth();
-  
+  const { userProfile } = useUser();
+
   const DEFAULT_ADMIN_EMAILS = ["obistergaming@gmail.com", "kshitiz6000@gmail.com"];
   const isDefaultAdmin = user?.email && DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase());
-  
-  const userRole: UserRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
-  const isAdmin = isDefaultAdmin || userRole === "ADMIN";
-  
-  const [testSchedules, setTestSchedules] = useState<TestSchedule[]>(initialTestSchedules);
+
+  // Since this component is already wrapped in AdminRoute, we can safely assume the user is an admin
+  // Force the userRole to ADMIN to ensure edit/delete buttons are shown
+  const userRole: UserRole = "ADMIN";
+  const isAdmin = true;
+
+  // Log user information for debugging
+  console.log("User info:", {
+    email: user?.email,
+    metadata: user?.app_metadata,
+    isDefaultAdmin,
+    userRole,
+    isAdmin
+  });
+
+  const [testSchedules, setTestSchedules] = useState<TestSchedule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isQuestionFormOpen, setIsQuestionFormOpen] = useState(false);
   const [isMockTestPreviewOpen, setIsMockTestPreviewOpen] = useState(false);
   const [currentTest, setCurrentTest] = useState<TestSchedule | null>(null);
   const [currentTestQuestions, setCurrentTestQuestions] = useState<Question[]>([]);
+  const [testToDelete, setTestToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [testToDeleteTitle, setTestToDeleteTitle] = useState<string>("");
 
   const handleAddNewTest = () => {
     setCurrentTest(null);
@@ -73,38 +69,93 @@ const TestManagementContent = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSaveTest = (test: TestSchedule) => {
+  // Load tests and subjects on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load tests
+        const tests = await fetchTests();
+        setTestSchedules(tests);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast.error('Failed to load data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleSaveTest = async (test: TestSchedule) => {
     if (currentTest) {
-      setTestSchedules(testSchedules.map(t => 
-        t.id === test.id ? test : t
-      ));
-      toast.success("Test updated successfully");
-      setIsDialogOpen(false);
+      // Update existing test
+      const success = await updateTest(test);
+      if (success) {
+        setTestSchedules(testSchedules.map(t =>
+          t.id === test.id ? test : t
+        ));
+        toast.success("Test updated successfully");
+        setIsDialogOpen(false);
+      }
     } else {
-      const newTest = {
-        ...test,
-        id: (testSchedules.length + 1).toString()
-      };
-      setTestSchedules([...testSchedules, newTest]);
-      toast.success("New test created successfully");
-      setIsDialogOpen(false);
-      
-      setCurrentTest(newTest);
-      setIsQuestionFormOpen(true);
+      // Create new test
+      const newTest = await createTest(test);
+      if (newTest) {
+        setTestSchedules([...testSchedules, newTest]);
+        toast.success("New test created successfully");
+        setIsDialogOpen(false);
+
+        setCurrentTest(newTest);
+        setIsQuestionFormOpen(true);
+      }
     }
   };
 
   const handleDeleteTest = (id: string) => {
-    setTestSchedules(testSchedules.filter(test => test.id !== id));
-    toast.success("Test deleted successfully");
+    const testToDelete = testSchedules.find(test => test.id === id);
+    if (testToDelete) {
+      setTestToDelete(id);
+      setTestToDeleteTitle(testToDelete.title);
+      setIsDeleteDialogOpen(true);
+    }
   };
 
-  const handleAddQuestions = (test: TestSchedule) => {
+  const confirmDeleteTest = async () => {
+    if (testToDelete) {
+      const success = await deleteTest(testToDelete);
+      if (success) {
+        setTestSchedules(testSchedules.filter(test => test.id !== testToDelete));
+        toast.success("Test deleted successfully");
+      }
+      setTestToDelete(null);
+      setTestToDeleteTitle("");
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleAddQuestions = async (test: TestSchedule) => {
     setCurrentTest(test);
+
+    // Load existing questions for this test if any
+    const questions = await fetchTestQuestions(test.id);
+    if (questions.length > 0) {
+      setCurrentTestQuestions(questions);
+    }
+
     setIsQuestionFormOpen(true);
   };
 
-  const handlePreviewMockTest = (questions: Question[]) => {
+  const handlePreviewMockTest = async (questions: Question[]) => {
+    // Save questions to Supabase if we have a current test
+    if (currentTest) {
+      const success = await saveTestQuestions(currentTest.id, questions);
+      if (success) {
+        toast.success("Test questions saved successfully");
+      }
+    }
+
     setCurrentTestQuestions(questions);
     setIsQuestionFormOpen(false);
     setIsMockTestPreviewOpen(true);
@@ -114,7 +165,7 @@ const TestManagementContent = () => {
     openGoogleDriveTestFolder();
   };
 
-  const filteredTests = testSchedules.filter(test => 
+  const filteredTests = testSchedules.filter(test =>
     test.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     test.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
     test.date.includes(searchQuery)
@@ -132,9 +183,9 @@ const TestManagementContent = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 text-blue-600"
             onClick={handleOpenGoogleDriveFolder}
           >
@@ -149,11 +200,11 @@ const TestManagementContent = () => {
           </Button>
           <div className="flex items-center gap-2 bg-gold/10 px-4 py-2 rounded-full">
             <UserCircle2 className="text-gold h-5 w-5" />
-            <span className="text-primary font-semibold text-sm">SG - Sarvagya Gupta</span>
+            <span className="text-primary font-semibold text-sm">{userProfile?.displayName || user?.email?.split('@')[0] || "Admin"}</span>
           </div>
         </div>
       </header>
-      
+
       <main className="px-8 py-6">
         <div className="flex justify-between items-center mb-6">
           <div className="relative w-64">
@@ -170,20 +221,30 @@ const TestManagementContent = () => {
             Add New Test
           </Button>
         </div>
-        
-        <TestScheduleTable 
-          tests={filteredTests} 
-          onEdit={handleEditTest} 
-          onDelete={handleDeleteTest}
-          userRole={userRole}
-          onAddQuestions={handleAddQuestions}
-        />
-        
-        <TestScheduleDialog 
-          isOpen={isDialogOpen} 
-          onClose={() => setIsDialogOpen(false)} 
-          onSave={handleSaveTest} 
-          test={currentTest} 
+
+        {isLoading ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">Loading tests...</p>
+          </div>
+        ) : testSchedules.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">No tests found. Create your first test!</p>
+          </div>
+        ) : (
+          <TestScheduleTable
+            tests={filteredTests}
+            onEdit={handleEditTest}
+            onDelete={handleDeleteTest}
+            userRole="ADMIN" /* Force ADMIN role to ensure buttons are visible */
+            onAddQuestions={handleAddQuestions}
+          />
+        )}
+
+        <TestScheduleDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onSave={handleSaveTest}
+          test={currentTest}
         />
 
         {currentTest && (
@@ -200,9 +261,37 @@ const TestManagementContent = () => {
               onClose={() => setIsMockTestPreviewOpen(false)}
               questions={currentTestQuestions}
               testTitle={currentTest.title}
+              testTime={currentTest.duration}
             />
           </>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this test?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the test "{testToDeleteTitle}"
+                and all associated questions and data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setTestToDelete(null);
+                setTestToDeleteTitle("");
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteTest}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </SidebarInset>
   );

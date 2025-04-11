@@ -1,13 +1,14 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Plus, X, Image, Upload, Save, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { saveTestToGoogleDrive } from "@/services/googleDriveService";
+import { saveTestQuestions } from "@/services/testService";
 
 export interface Option {
   id: string;
@@ -51,7 +52,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     marks: 4,
     negativeMarks: 1
   });
-  
+
   const questionImageInputRef = useRef<HTMLInputElement>(null);
   const optionImageInputRefs = {
     A: useRef<HTMLInputElement>(null),
@@ -121,7 +122,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
   const handleOptionChange = (optionId: string, value: string) => {
     setCurrentQuestion({
       ...currentQuestion,
-      options: currentQuestion.options.map(option => 
+      options: currentQuestion.options.map(option =>
         option.id === optionId ? { ...option, text: value } : option
       )
     });
@@ -130,7 +131,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
   const handleOptionImageUrlChange = (optionId: string, value: string) => {
     setCurrentQuestion({
       ...currentQuestion,
-      options: currentQuestion.options.map(option => 
+      options: currentQuestion.options.map(option =>
         option.id === optionId ? { ...option, imageUrl: value } : option
       )
     });
@@ -139,7 +140,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
   const handleCorrectOptionChange = (optionId: string) => {
     setCurrentQuestion({
       ...currentQuestion,
-      options: currentQuestion.options.map(option => 
+      options: currentQuestion.options.map(option =>
         ({ ...option, isCorrect: option.id === optionId })
       )
     });
@@ -176,7 +177,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       reader.onload = () => {
         setCurrentQuestion({
           ...currentQuestion,
-          options: currentQuestion.options.map(option => 
+          options: currentQuestion.options.map(option =>
             option.id === optionId ? { ...option, imageUrl: reader.result as string } : option
           )
         });
@@ -207,7 +208,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     const newQuestionId = (questions.length + 1).toString();
     const updatedQuestions = [...questions, { ...currentQuestion, id: newQuestionId }];
     setQuestions(updatedQuestions);
-    
+
     // Reset current question form
     setCurrentQuestion({
       id: (questions.length + 2).toString(),
@@ -226,18 +227,20 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
     });
 
     toast.success("Question added");
-    
-    // Auto-save to Google Drive
+
+    // Auto-save to Google Drive and Supabase
     saveToGoogleDrive(updatedQuestions);
+    // We'll let the parent component handle saving to Supabase when preview is clicked
   };
 
   const removeQuestion = (id: string) => {
     const updatedQuestions = questions.filter(q => q.id !== id);
     setQuestions(updatedQuestions);
     toast.success("Question removed");
-    
+
     // Auto-save to Google Drive after removing
     saveToGoogleDrive(updatedQuestions);
+    // We'll let the parent component handle saving to Supabase when preview is clicked
   };
 
   const handlePreview = () => {
@@ -266,7 +269,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
       questions,
       lastSaved: new Date().toISOString()
     });
-    
+
     if (saved) {
       toast.success("Test data saved to Google Drive folder");
     }
@@ -287,14 +290,25 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
           <DialogTitle className="text-xl font-semibold text-primary">
             Add Questions to {testTitle}
           </DialogTitle>
+          <DialogDescription>
+            Create questions with options for this test. You can add multiple questions.
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm">
+              <p className="font-medium text-blue-800">Scoring Information:</p>
+              <ul className="list-disc pl-5 mt-1 text-blue-700 space-y-1">
+                <li>The <strong>Marks</strong> field sets points awarded for correct answers</li>
+                <li>The <strong>Negative Marks</strong> field sets points deducted for incorrect answers</li>
+                <li>Unattempted questions receive zero points (no deduction)</li>
+              </ul>
+            </div>
+          </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Subject selector */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="subject">Subject</Label>
-              <select 
+              <select
                 id="subject"
                 className="w-full p-2 border rounded-md"
                 value={currentQuestion.subject}
@@ -307,30 +321,32 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
             </div>
             <div>
               <Label htmlFor="marks">Marks</Label>
-              <Input 
+              <Input
                 id="marks"
-                type="number" 
+                type="number"
                 min="0"
-                value={currentQuestion.marks} 
+                value={currentQuestion.marks}
                 onChange={handleMarksChange}
               />
+              <p className="text-xs text-gray-500 mt-1">Points awarded for a correct answer</p>
             </div>
             <div>
               <Label htmlFor="negativeMarks">Negative Marks</Label>
-              <Input 
+              <Input
                 id="negativeMarks"
-                type="number" 
+                type="number"
                 min="0"
-                value={currentQuestion.negativeMarks} 
+                value={currentQuestion.negativeMarks}
                 onChange={handleNegativeMarksChange}
               />
+              <p className="text-xs text-gray-500 mt-1">Points deducted for an incorrect answer</p>
             </div>
           </div>
 
           {/* Question input */}
           <div className="space-y-2">
             <Label htmlFor="question">Question</Label>
-            <Textarea 
+            <Textarea
               id="question"
               placeholder="Enter your question here..."
               value={currentQuestion.text}
@@ -343,7 +359,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
           <div className="space-y-2">
             <Label htmlFor="questionImage">Question Image</Label>
             <div className="flex gap-2">
-              <Input 
+              <Input
                 id="imageUrl"
                 placeholder="Enter image URL or upload/choose below"
                 value={currentQuestion.imageUrl?.startsWith("data:") ? "Image Uploaded" : currentQuestion.imageUrl || ""}
@@ -351,9 +367,9 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                 className="flex-grow"
                 disabled={currentQuestion.imageUrl?.startsWith("data:")}
               />
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => questionImageInputRef.current?.click()}
               >
                 <Upload className="h-4 w-4 mr-2" />
@@ -367,36 +383,36 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                 className="hidden"
               />
             </div>
-            
+
             {/* Sample images */}
             <div className="mt-2">
               <Label className="text-sm text-gray-500 mb-2 block">Sample Images:</Label>
               <div className="grid grid-cols-4 gap-2">
                 {sampleImages.map((url, index) => (
-                  <button 
+                  <button
                     key={index}
                     type="button"
                     className={`p-1 border rounded-md hover:border-primary transition-all ${currentQuestion.imageUrl === url ? 'border-primary-500 ring-2 ring-primary-200' : 'border-gray-200'}`}
                     onClick={() => setCurrentQuestion({...currentQuestion, imageUrl: url})}
                   >
-                    <img 
-                      src={url} 
-                      alt={`Sample ${index + 1}`} 
+                    <img
+                      src={url}
+                      alt={`Sample ${index + 1}`}
                       className="h-16 w-full object-cover rounded"
                     />
                   </button>
                 ))}
               </div>
             </div>
-            
+
             {/* Preview of selected image */}
             {currentQuestion.imageUrl && (
               <div className="mt-3 border rounded-md p-2">
                 <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
                 <div className="relative">
-                  <img 
-                    src={currentQuestion.imageUrl} 
-                    alt="Question illustration" 
+                  <img
+                    src={currentQuestion.imageUrl}
+                    alt="Question illustration"
                     className="max-h-48 mx-auto object-contain"
                     onError={() => {
                       toast.error("Failed to load image");
@@ -425,7 +441,7 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                   <div className="w-8 h-8 rounded-full border flex items-center justify-center bg-gray-100">
                     {option.id}
                   </div>
-                  <Input 
+                  <Input
                     placeholder={`Option ${option.id}`}
                     value={option.text}
                     onChange={(e) => handleOptionChange(option.id, e.target.value)}
@@ -440,19 +456,19 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                     Correct
                   </Button>
                 </div>
-                
+
                 {/* Option Image Upload */}
                 <div className="flex gap-2 mt-2">
-                  <Input 
+                  <Input
                     placeholder={`Image URL for Option ${option.id} (optional)`}
                     value={option.imageUrl?.startsWith("data:") ? "Image Uploaded" : option.imageUrl || ""}
                     onChange={(e) => handleOptionImageUrlChange(option.id, e.target.value)}
                     className="flex-grow"
                     disabled={option.imageUrl?.startsWith("data:")}
                   />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => optionImageInputRefs[option.id as keyof typeof optionImageInputRefs].current?.click()}
                   >
                     <Upload className="h-4 w-4 mr-2" />
@@ -466,14 +482,14 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                     className="hidden"
                   />
                 </div>
-                
+
                 {/* Option image preview */}
                 {option.imageUrl && (
                   <div className="mt-2 border rounded-md p-2">
                     <div className="relative">
-                      <img 
-                        src={option.imageUrl} 
-                        alt={`Option ${option.id}`} 
+                      <img
+                        src={option.imageUrl}
+                        alt={`Option ${option.id}`}
                         className="max-h-24 mx-auto object-contain"
                         onError={() => {
                           toast.error(`Failed to load image for Option ${option.id}`);
@@ -508,20 +524,23 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button 
-              onClick={addQuestion} 
+            <Button
+              onClick={addQuestion}
               className="w-full bg-gold hover:bg-gold/90 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Question
             </Button>
-            
+
             <Button
-              onClick={() => saveToGoogleDrive(questions)}
+              onClick={() => {
+                saveToGoogleDrive(questions);
+                toast.success("Draft saved to Google Drive");
+              }}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Save className="h-4 w-4 mr-2" />
-              Save Draft to Google Drive
+              Save Draft
             </Button>
           </div>
 
@@ -534,9 +553,9 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                   <div key={q.id} className="p-3 border rounded-md flex justify-between items-start">
                     <div className="flex items-start gap-3 flex-1">
                       {q.imageUrl && (
-                        <img 
-                          src={q.imageUrl} 
-                          alt="" 
+                        <img
+                          src={q.imageUrl}
+                          alt=""
                           className="h-12 w-12 object-cover rounded"
                         />
                       )}
@@ -551,9 +570,9 @@ const TestQuestionForm: React.FC<TestQuestionFormProps> = ({ isOpen, onClose, on
                         </div>
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => removeQuestion(q.id)}
                       className="text-red-500 hover:text-red-700"
                     >

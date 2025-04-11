@@ -1,22 +1,22 @@
 
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton
+  SidebarMenuButton,
+  useSidebar
 } from "@/components/ui/sidebar";
-import { 
-  Megaphone, 
-  ClipboardList, 
+import {
+  Megaphone,
+  ClipboardList,
   CalendarPlus,
-  Video, 
-  BookOpen, 
-  LineChart, 
-  HelpCircle, 
-  Settings,
-  ShieldAlert
+  Video,
+  BookOpen,
+  ShieldAlert,
+  LayoutDashboard,
+  Home
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,90 +24,124 @@ import { useAuth } from "@/contexts/AuthContext";
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
-  
-  // Get user role from the auth context (default to "USER" if not found)
-  const userRole = (user && user.app_metadata && user.app_metadata.role) || "USER";
-  
-  // If user is logged in, they can access admin features
-  // This is for development purposes, in production you'd want stricter checks
-  const isAdmin = userRole === "ADMIN" || !!user;
-  
+  const { isMobile } = useSidebar();
+
+  // List of default admin emails
+  const DEFAULT_ADMIN_EMAILS = [
+    "obistergaming@gmail.com",
+    "kshitiz6000@gmail.com"
+  ];
+
+  // Check if user email is in the admin list or has admin role in metadata
+  const isAdmin = user?.email && (
+    DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase()) ||
+    (user.app_metadata && user.app_metadata.role === "ADMIN")
+  );
+
   return (
-    <Sidebar className="bg-gradient-to-br from-primary to-secondary text-white">
-      <SidebarHeader className="border-b border-white/10 pb-4">
-        <h1 className="text-2xl font-playfair font-bold gold-gradient">EduLux</h1>
+    <Sidebar className={`${isMobile ? 'bg-navy' : 'bg-gradient-to-br from-primary to-secondary'} text-white`}>
+      <SidebarHeader className={`border-b border-white/10 pb-4 ${isMobile ? 'pt-6 px-6' : ''}`}>
+        <h1 className={`font-playfair font-bold gold-gradient ${isMobile ? 'text-3xl' : 'text-2xl'}`}>Kaksha360</h1>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
+      <SidebarContent className={isMobile ? 'p-4' : ''}>
+        <SidebarMenu className={isMobile ? 'space-y-3' : ''}>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/tests" || location.pathname === "/dashboard"} tooltip="Tests">
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/"}
+              tooltip="Home"
+              className={isMobile ? 'py-3 text-base' : ''}
+            >
+              <Link to="/">
+                <Home className={`${location.pathname === "/" ? "text-gold" : ""} ${isMobile ? 'h-5 w-5 text-white' : ''}`} />
+                <span>Home</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/dashboard"}
+              tooltip="Dashboard"
+              className={isMobile ? 'py-3 text-base' : ''}
+            >
+              <Link to="/dashboard">
+                <LayoutDashboard className={`${location.pathname === "/dashboard" ? "text-gold" : ""} ${isMobile ? 'h-5 w-5 text-white' : ''}`} />
+                <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/tests"}
+              tooltip="Tests"
+              className={isMobile ? 'py-3 text-base' : ''}
+            >
               <Link to="/tests">
-                <ClipboardList className={location.pathname === "/tests" || location.pathname === "/dashboard" ? "text-gold" : ""} />
+                <ClipboardList className={`${location.pathname === "/tests" ? "text-gold" : ""} ${isMobile ? 'h-5 w-5 text-white' : ''}`} />
                 <span>Tests</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           {isAdmin && (
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/test-management"} tooltip="Test Management">
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname === "/test-management"}
+                tooltip="Test Management"
+                className={isMobile ? 'py-3 text-base' : ''}
+              >
                 <Link to="/test-management">
-                  <CalendarPlus className={location.pathname === "/test-management" ? "text-gold" : ""} />
+                  <CalendarPlus className={`${location.pathname === "/test-management" ? "text-gold" : ""} ${isMobile ? 'h-5 w-5 text-white' : ''}`} />
                   <span>Test Management</span>
-                  <div className="ml-2 p-1 bg-amber-100 rounded-full">
-                    <ShieldAlert className="h-3 w-3 text-amber-600" />
+                  <div className={`ml-2 p-1 bg-amber-100 rounded-full ${isMobile ? 'p-1.5' : ''}`}>
+                    <ShieldAlert className={`text-amber-600 ${isMobile ? 'h-3.5 w-3.5' : 'h-3 w-3'}`} />
                   </div>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/announcements"} tooltip="Announcements">
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/announcements"}
+              tooltip="Announcements"
+              className={isMobile ? 'py-3 text-base' : ''}
+            >
               <Link to="/announcements">
-                <Megaphone />
+                <Megaphone className={isMobile ? 'h-5 w-5 text-white' : ''} />
                 <span>Announcements</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/videos"} tooltip="Videos">
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/videos"}
+              tooltip="Videos"
+              className={isMobile ? 'py-3 text-base' : ''}
+            >
               <Link to="/videos">
-                <Video />
+                <Video className={isMobile ? 'h-5 w-5 text-white' : ''} />
                 <span>Videos</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/study-material"} tooltip="Study Material">
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/study-material"}
+              tooltip="Study Material"
+              className={isMobile ? 'py-3 text-base' : ''}
+            >
               <Link to="/study-material">
-                <BookOpen />
+                <BookOpen className={isMobile ? 'h-5 w-5 text-white' : ''} />
                 <span>Study Material</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/performance"} tooltip="Performance">
-              <Link to="/performance">
-                <LineChart />
-                <span>Performance</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/doubts"} tooltip="Doubts">
-              <Link to="/doubts">
-                <HelpCircle />
-                <span>Doubts</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === "/settings"} tooltip="Settings">
-              <Link to="/settings">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+
         </SidebarMenu>
       </SidebarContent>
     </Sidebar>

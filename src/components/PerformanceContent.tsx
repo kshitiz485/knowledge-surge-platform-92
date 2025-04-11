@@ -3,7 +3,8 @@ import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { UserCircle2, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, ResponsiveContainer } from 'recharts';
+import { YAxis, XAxis, Line, CartesianGrid, Tooltip, Legend } from './ui/recharts-wrappers';
 
 const performanceData = [
   { name: 'Test 1', score: 78, average: 65 },
@@ -34,7 +35,7 @@ const PerformanceContent = () => {
           </div>
         </div>
       </header>
-      
+
       <main className="px-8 py-6">
         <div className="space-y-8">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -53,20 +54,20 @@ const PerformanceContent = () => {
               </ResponsiveContainer>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-lg font-medium text-primary mb-2">Overall Average</h3>
               <p className="text-3xl font-bold text-gold">82%</p>
               <p className="text-green-500 text-sm mt-1">+5% from previous month</p>
             </div>
-            
+
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-lg font-medium text-primary mb-2">Tests Completed</h3>
               <p className="text-3xl font-bold text-gold">12/15</p>
               <p className="text-amber-500 text-sm mt-1">3 remaining this month</p>
             </div>
-            
+
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-lg font-medium text-primary mb-2">Subject Ranking</h3>
               <p className="text-3xl font-bold text-gold">#4</p>
