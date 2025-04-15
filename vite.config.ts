@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Add historyApiFallback for SPA routing during development
+    historyApiFallback: true
   },
   plugins: [
     react(),
