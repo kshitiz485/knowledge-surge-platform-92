@@ -40,7 +40,8 @@ const Navbar = () => {
   // List of default admin emails
   const DEFAULT_ADMIN_EMAILS = [
     "obistergaming@gmail.com",
-    "kshitiz6000@gmail.com"
+    "kshitiz6000@gmail.com",
+    "gaurav.attri8@gmail.com"
   ];
 
   // Check if user email is in the admin list or has admin role in metadata
@@ -50,7 +51,7 @@ const Navbar = () => {
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary to-secondary shadow-md border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary to-secondary shadow-md border-b border-white/10 w-full">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-20">
           <div className="font-playfair text-2xl md:text-3xl font-bold gold-gradient">
@@ -134,9 +135,8 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-secondary py-4 animate-slide-up">
-          <ul className="flex flex-col items-center space-y-4 pb-4">
+      <div className={`md:hidden bg-secondary py-4 fixed top-20 left-0 right-0 z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-y-0 opacity-100 shadow-lg' : '-translate-y-full opacity-0'}`}>
+        <ul className="flex flex-col items-center space-y-4 pb-4">
             <li>
               <Link
                 to="/courses"
@@ -194,7 +194,6 @@ const Navbar = () => {
             </li>
           </ul>
         </div>
-      )}
 
       <AuthModal
         isOpen={isAuthModalOpen}

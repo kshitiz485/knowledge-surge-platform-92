@@ -3,6 +3,7 @@ import { TestSchedule } from "@/types/test";
 import { Question } from "@/components/TestQuestionForm";
 import { toast } from "sonner";
 import { secondsToTimeObject, timeObjectToSeconds } from "@/lib/utils";
+import { safelyStoreInLocalStorage, safelyRetrieveFromLocalStorage } from "@/utils/storageUtils";
 
 // Fallback test data in case Supabase tables don't exist yet
 const fallbackTests: TestSchedule[] = [
@@ -321,14 +322,51 @@ export const deleteTest = async (id: string): Promise<boolean> => {
  * Save test questions to Supabase
  */
 export const saveTestQuestions = async (testId: string, questions: Question[]): Promise<boolean> => {
+  console.log(`Saving ${questions.length} questions for test ${testId}:`, questions);
+
+  // Handle empty questions array - this means all questions were deleted
+  if (questions.length === 0) {
+    console.log(`No questions to save for test ${testId}. This likely means all questions were deleted.`);
+
+    try {
+      // Remove from localStorage
+      localStorage.removeItem(`test_questions_${testId}`);
+      console.log(`Removed empty question list from localStorage for test ${testId}`);
+
+      // If we're using Supabase, we would delete all questions for this test here
+      const tablesExist = await checkSupabaseTables();
+      if (tablesExist) {
+        // TODO: Implement deletion of all questions for this test in Supabase
+        console.log(`Supabase tables exist, but deletion of all questions is not implemented yet`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`Error handling empty questions for test ${testId}:`, error);
+      return false;
+    }
+  }
+
   try {
     // Check if Supabase tables exist
     const tablesExist = await checkSupabaseTables();
     if (!tablesExist) {
-      // Save to localStorage instead
-      localStorage.setItem(`test_questions_${testId}`, JSON.stringify(questions));
-      toast.success("Questions saved to local storage");
-      return true;
+      // Save to localStorage instead using our utility function
+      const storageKey = `test_questions_${testId}`;
+      const result = safelyStoreInLocalStorage(storageKey, questions);
+
+      if (result.success) {
+        toast.success(`Questions saved to local storage (${result.size?.toFixed(2)}MB)`);
+        return true;
+      } else {
+        console.error(`Failed to save to localStorage: ${result.error}`);
+        if (result.size) {
+          toast.warning(`Test data is too large (${result.size.toFixed(2)}MB) for local storage. Please set up database storage.`);
+        } else {
+          toast.error("Failed to save questions to local storage. Please set up database storage.");
+        }
+        return false;
+      }
     }
 
     // For each question, save it and its options
@@ -436,7 +474,7 @@ const createMockQuestions = (testId: string): Question[] => {
     return {
       id: `q-${i + 1}`,
       text: `This is question ${i + 1} about ${subject.charAt(0).toUpperCase() + subject.slice(1)}`,
-      subject: subject as 'physics' | 'chemistry' | 'mathematics',
+      subject: subject,
       imageUrl: questionImageUrl,
       options: options,
       marks: 4,
@@ -449,18 +487,26 @@ const createMockQuestions = (testId: string): Question[] => {
  * Fetch test questions for a specific test
  */
 export const fetchTestQuestions = async (testId: string): Promise<Question[]> => {
+  console.log(`Fetching questions for test ${testId}`);
   try {
     // Check if Supabase tables exist
     const tablesExist = await checkSupabaseTables();
     if (!tablesExist) {
-      // Try to get from localStorage
-      const savedQuestions = localStorage.getItem(`test_questions_${testId}`);
-      if (savedQuestions) {
-        try {
-          return JSON.parse(savedQuestions);
-        } catch (e) {
-          console.error("Error parsing saved questions:", e);
-        }
+      // Try to get from localStorage using our utility function
+      const storageKey = `test_questions_${testId}`;
+      console.log(`Checking localStorage for ${storageKey}`);
+
+      // Check if the key exists in localStorage first
+      const keyExists = localStorage.getItem(storageKey) !== null;
+
+      // If the key exists but is empty or contains an empty array, it means all questions were deleted
+      if (keyExists) {
+        const savedQuestions = safelyRetrieveFromLocalStorage<Question[]>(storageKey, []);
+
+        // Return the saved questions, even if it's an empty array
+        // This is important to distinguish between "no questions saved yet" and "all questions deleted"
+        console.log(`Retrieved ${savedQuestions.length} questions from localStorage for test ${testId}`);
+        return savedQuestions;
       }
       console.log("No questions found in localStorage, returning mock questions");
       return createMockQuestions(testId);
@@ -501,7 +547,7 @@ export const fetchTestQuestions = async (testId: string): Promise<Question[]> =>
       questions.push({
         id: questionData.id,
         text: questionData.text,
-        subject: questionData.subject as "physics" | "chemistry" | "mathematics",
+        subject: questionData.subject,
         imageUrl: questionData.image_url || undefined,
         solution: questionData.solution || undefined,
         marks: questionData.marks || undefined,

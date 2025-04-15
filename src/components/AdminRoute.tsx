@@ -10,15 +10,16 @@ interface AdminRouteProps {
 // List of default admin emails
 const DEFAULT_ADMIN_EMAILS = [
   "obistergaming@gmail.com",
-  "kshitiz6000@gmail.com"
+  "kshitiz6000@gmail.com",
+  "gaurav.attri8@gmail.com"
 ];
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading } = useAuth();
-  
+
   // Check if user email is in the admin list
   const isAdmin = user?.email && (
-    DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase()) || 
+    DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase()) ||
     (user.app_metadata && user.app_metadata.role === "ADMIN")
   );
 

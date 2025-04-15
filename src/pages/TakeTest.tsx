@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ArrowLeft, Clock, UserCircle2, CalendarClock, Timer, Square, X, CheckSquare, HelpCircle, Search } from "lucide-react";
 import { fetchTestQuestions, fetchTests, saveTestSubmission } from "@/services/testService";
+import { fetchSubjects } from "@/services/subjectService";
 import { TestSchedule } from "@/types/test";
 import { Question } from "@/components/TestQuestionForm";
 import { cn, parseDurationToSeconds, secondsToTimeObject } from "@/lib/utils";
@@ -33,6 +34,7 @@ const TakeTest = () => {
   const [timeRemaining, setTimeRemaining] = useState({ minutes: 174, seconds: 17 });
   const [timeTaken, setTimeTaken] = useState({ minutes: 0, seconds: 0 });
   const [isTestSubmitted, setIsTestSubmitted] = useState(false);
+  const [isStatusPanelMinimized, setIsStatusPanelMinimized] = useState(false);
   const [testResults, setTestResults] = useState({
     score: 0,
     totalScore: 0,
@@ -43,11 +45,28 @@ const TakeTest = () => {
     unattemptedQuestions: 0
   });
   const [subject, setSubject] = useState("physics");
+  const [subjects, setSubjects] = useState<{id: string, name: string}[]>([]);
+
+  // Get all available subjects that have questions
+  const availableSubjects = questions.length > 0
+    ? [...new Set(questions.map(q => q.subject))]
+    : [];
+
+  // If current subject has no questions but there are other subjects with questions,
+  // automatically select the first available subject
+  useEffect(() => {
+    if (questions.length > 0 && !questions.some(q => q.subject === subject) && availableSubjects.length > 0) {
+      console.log(`Current subject '${subject}' has no questions. Switching to '${availableSubjects[0]}'`);
+      setSubject(availableSubjects[0]);
+    }
+  }, [questions, subject, availableSubjects]);
 
   // Get filtered questions based on selected subject
   const filteredQuestions = questions.length > 0
     ? questions.filter(q => q.subject === subject)
     : [];
+
+  console.log(`Total questions: ${questions.length}, Available subjects: ${availableSubjects.join(', ')}, Filtered questions for subject '${subject}': ${filteredQuestions.length}`);
 
   // Get current question based on filtered list
   const currentQuestionData = filteredQuestions.length > 0 && currentQuestion <= filteredQuestions.length
@@ -58,6 +77,47 @@ const TakeTest = () => {
   const currentQuestionIndex = currentQuestionData
     ? questions.findIndex(q => q.id === currentQuestionData.id)
     : -1;
+
+  // Add scroll indicators to scrollable containers
+  useEffect(() => {
+    const addScrollIndicators = () => {
+      // For question container
+      const questionContainer = document.getElementById('question');
+      if (questionContainer) {
+        const hasScroll = questionContainer.scrollHeight > questionContainer.clientHeight;
+        const indicator = questionContainer.querySelector('.scroll-indicator');
+        if (indicator) {
+          if (hasScroll) {
+            indicator.classList.add('has-scroll');
+          } else {
+            indicator.classList.remove('has-scroll');
+          }
+        }
+      }
+
+      // For option containers
+      const optionContainers = document.querySelectorAll('.option-container');
+      optionContainers.forEach(container => {
+        const hasScroll = container.scrollHeight > container.clientHeight;
+        const indicator = container.querySelector('.scroll-indicator');
+        if (indicator) {
+          if (hasScroll) {
+            indicator.classList.add('has-scroll');
+          } else {
+            indicator.classList.remove('has-scroll');
+          }
+        }
+      });
+    };
+
+    // Run initially and on window resize
+    addScrollIndicators();
+    window.addEventListener('resize', addScrollIndicators);
+
+    return () => {
+      window.removeEventListener('resize', addScrollIndicators);
+    };
+  }, [currentQuestion, filteredQuestions.length]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Security measures
@@ -151,6 +211,20 @@ const TakeTest = () => {
     }
   }
 
+  // Fetch subjects
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        const fetchedSubjects = await fetchSubjects();
+        setSubjects(fetchedSubjects);
+      } catch (error) {
+        console.error("Error fetching subjects:", error);
+      }
+    };
+
+    loadSubjects();
+  }, []);
+
   // Initialize test data
   useEffect(() => {
     const loadTest = async () => {
@@ -237,7 +311,7 @@ const TakeTest = () => {
             mockQuestions = Array(25).fill(null).map((_, i) => ({
               id: `q-${i + 1}`,
               text: `This is question ${i + 1} about ${i % 3 === 0 ? 'Physics' : i % 3 === 1 ? 'Chemistry' : 'Mathematics'}`,
-              subject: (i % 3 === 0 ? 'physics' : i % 3 === 1 ? 'chemistry' : 'mathematics') as 'physics' | 'chemistry' | 'mathematics',
+              subject: (i % 3 === 0 ? 'physics' : i % 3 === 1 ? 'chemistry' : 'mathematics'),
               options: [
                 { id: `q-${i + 1}-a`, text: `Option A for question ${i + 1}`, isCorrect: i % 4 === 0 },
                 { id: `q-${i + 1}-b`, text: `Option B for question ${i + 1}`, isCorrect: i % 4 === 1 },
@@ -957,7 +1031,7 @@ const TakeTest = () => {
       ) : (
         <>
         {/* Main content */}
-        <div className="main-content max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+        <div className={`main-content max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg ${isStatusPanelMinimized ? 'panel-minimized' : ''}`}>
         <header className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">{test?.title}</h1>
           <div className="timer">
@@ -987,12 +1061,16 @@ const TakeTest = () => {
         <section className="mb-6">
           <div className="flex flex-col">
             {/* Subject Tabs */}
-            <div className="flex w-full overflow-x-auto bg-gray-100 border border-gray-200" role="tablist">
+            {availableSubjects.length > 0 ? (
+              <div className="flex w-full overflow-x-auto bg-gray-100 border border-gray-200" role="tablist">
+              {/* Default subjects - only show if they have questions */}
               {[
                 { id: "physics", label: "Physics" },
                 { id: "chemistry", label: "Chemistry" },
                 { id: "mathematics", label: "Mathematics" }
-              ].map((tab) => (
+              ]
+              .filter(tab => questions.some(q => q.subject === tab.id))
+              .map((tab) => (
                 <button
                   key={tab.id}
                   className={`py-2 px-4 font-medium text-sm whitespace-nowrap ${subject === tab.id ?
@@ -1008,7 +1086,33 @@ const TakeTest = () => {
                   {tab.label}
                 </button>
               ))}
+
+              {/* Custom subjects - only show if they have questions */}
+              {subjects
+                .filter(s => !['physics', 'chemistry', 'mathematics'].includes(s.id))
+                .filter(s => questions.some(q => q.subject === s.id))
+                .map((customSubject) => (
+                  <button
+                    key={customSubject.id}
+                    className={`py-2 px-4 font-medium text-sm whitespace-nowrap ${subject === customSubject.id ?
+                      'text-white bg-blue-600' :
+                      'text-gray-700 hover:text-blue-600 hover:bg-gray-50'}`}
+                    onClick={() => {
+                      setSubject(customSubject.id);
+                      setCurrentQuestion(1);
+                    }}
+                    role="tab"
+                    aria-selected={subject === customSubject.id}
+                  >
+                    {customSubject.name}
+                  </button>
+                ))}
             </div>
+            ) : (
+              <div className="bg-gray-100 border border-gray-200 p-4 text-center text-gray-500">
+                No subjects available. This test doesn't have any questions yet.
+              </div>
+            )}
 
             {/* Question Info */}
             <div className="flex justify-between items-center p-4 bg-gray-50">
@@ -1025,9 +1129,9 @@ const TakeTest = () => {
 
         <section id="question-container" className="mb-6">
           {/* Question text container with scrolling */}
-          <div id="question" className="mt-4 text-lg font-medium max-h-[200px] overflow-y-auto overflow-x-hidden p-4 border border-gray-200 rounded-lg relative scrollable-container">
+          <div id="question" className="mt-4 text-lg font-medium max-h-[300px] overflow-y-auto overflow-x-hidden p-4 border border-gray-200 rounded-lg relative scrollable-container">
             <div className="scroll-indicator"></div>
-            <div>
+            <div className="question-text whitespace-pre-wrap break-words">
               {currentQuestionData?.text || "Question will appear here..."}
             </div>
           </div>
@@ -1062,7 +1166,7 @@ const TakeTest = () => {
                     <div className="option-letter mr-2 flex-shrink-0">
                       {optionLetter})
                     </div>
-                    <div className="option-text">
+                    <div className="option-text whitespace-pre-wrap break-words">
                       {option.text}
                     </div>
                   </div>
@@ -1135,8 +1239,17 @@ const TakeTest = () => {
       </div>
 
       {/* Question status sidebar */}
-      <div className="aside-right">
-        <h2 className="text-lg font-bold mb-4">Question Status</h2>
+      <div className={`aside-right ${isStatusPanelMinimized ? 'minimized' : ''}`}>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">Question Status</h2>
+          <button
+            className="minimize-bar p-1 rounded hover:bg-gray-100 transition-colors"
+            onClick={() => setIsStatusPanelMinimized(!isStatusPanelMinimized)}
+            title={isStatusPanelMinimized ? "Expand panel" : "Minimize panel"}
+          >
+            <div className="bar-icon">{isStatusPanelMinimized ? "➕" : "➖"}</div>
+          </button>
+        </div>
         <div className="grid grid-cols-5 gap-1 mt-4" id="question-status-list">
           {questionStatus.map((status, index) => {
             // Get the question at this index
@@ -1184,10 +1297,11 @@ const TakeTest = () => {
             transition: all 0.3s ease-in-out;
             display: flex;
             align-items: flex-start;
-            max-height: 120px;
+            max-height: 150px;
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
+            width: 100%;
         }
 
         /* Scrollbar styling */
@@ -1273,6 +1387,15 @@ const TakeTest = () => {
         .option-text {
             flex: 1;
             word-break: break-word;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        /* Question text styling */
+        .question-text {
+            word-break: break-word;
+            white-space: pre-wrap;
+            line-height: 1.5;
         }
 
         /* Scrollable container indicator */
@@ -1333,6 +1456,67 @@ const TakeTest = () => {
             box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
             padding: 20px;
             overflow-y: auto;
+            transition: transform 0.3s ease, width 0.3s ease;
+            z-index: 50;
+        }
+
+        .aside-right.minimized {
+            transform: translateX(calc(100% - 40px));
+        }
+
+        .aside-right.minimized .minimize-bar {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+        }
+
+        .aside-right.minimized > div:not(:first-child),
+        .aside-right.minimized > h2 {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .minimize-bar {
+            cursor: pointer;
+            font-size: 16px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .minimize-bar:hover {
+            background: #f1f5f9;
+            transform: scale(1.05);
+        }
+
+        .bar-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .aside-right.minimized .bar-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Add a vertical bar to the minimized panel */
+        .aside-right.minimized::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #3b82f6, #60a5fa);
+            opacity: 0.7;
         }
         .question-status {
             display: flex;
@@ -1382,6 +1566,11 @@ const TakeTest = () => {
         }
         .main-content {
             margin-right: 320px;
+            transition: margin-right 0.3s ease;
+        }
+
+        .main-content.panel-minimized {
+            margin-right: 40px;
         }
         .status-legend {
             display: flex;

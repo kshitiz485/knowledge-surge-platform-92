@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import responsive styles */
+@import './styles/responsive.css';
+
 /* Fix for time picker dropdown issues */
 [data-radix-popper-content-wrapper] {
   z-index: 9999 !important;

@@ -15,6 +15,7 @@ import { useUser } from "@/contexts/UserContext";
 import { Link } from "react-router-dom";
 import { openGoogleDriveTestFolder } from "@/services/googleDriveService";
 import { fetchTests, createTest, updateTest, deleteTest, saveTestQuestions, fetchTestQuestions } from "@/services/testService";
+import { safelyStoreInLocalStorage, checkLocalStorageAvailability } from "@/utils/storageUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +31,7 @@ const TestManagementContent = () => {
   const { user } = useAuth();
   const { userProfile } = useUser();
 
-  const DEFAULT_ADMIN_EMAILS = ["obistergaming@gmail.com", "kshitiz6000@gmail.com"];
+  const DEFAULT_ADMIN_EMAILS = ["obistergaming@gmail.com", "kshitiz6000@gmail.com", "gaurav.attri8@gmail.com"];
   const isDefaultAdmin = user?.email && DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase());
 
   // Since this component is already wrapped in AdminRoute, we can safely assume the user is an admin
@@ -150,9 +151,51 @@ const TestManagementContent = () => {
   const handlePreviewMockTest = async (questions: Question[]) => {
     // Save questions to Supabase if we have a current test
     if (currentTest) {
-      const success = await saveTestQuestions(currentTest.id, questions);
-      if (success) {
-        toast.success("Test questions saved successfully");
+      console.log(`Saving ${questions.length} questions for test ${currentTest.id} from TestManagementContent`);
+
+      // If there are no questions, we need to handle this case specially
+      if (questions.length === 0) {
+        console.log(`No questions to save for test ${currentTest.id}. Clearing any existing questions.`);
+
+        // Clear questions from localStorage
+        try {
+          localStorage.removeItem(`test_questions_${currentTest.id}`);
+          console.log(`Cleared questions from localStorage for test ${currentTest.id}`);
+        } catch (error) {
+          console.error(`Error clearing questions from localStorage: ${error}`);
+        }
+
+        // TODO: If using Supabase, we would delete all questions for this test here
+        // For now, we'll just show a success message
+        toast.success("Test updated with no questions");
+      } else {
+        // Save questions normally
+        const success = await saveTestQuestions(currentTest.id, questions);
+        if (success) {
+          toast.success("Test questions saved successfully");
+
+          // Check localStorage availability
+          const storageStatus = checkLocalStorageAvailability();
+          if (!storageStatus.available) {
+            console.warn("localStorage is not available:", storageStatus.error);
+            toast.info("Local storage is not available. Using server storage only.");
+          } else {
+            // Store in localStorage as a backup using our utility function
+            const storageKey = `test_questions_${currentTest.id}`;
+            const result = safelyStoreInLocalStorage(storageKey, questions);
+
+            if (result.success) {
+              console.log(`Also saved questions to localStorage as ${storageKey} (${result.size?.toFixed(2)}MB)`);
+            } else {
+              console.warn(`Failed to save to localStorage: ${result.error}`);
+              if (result.size) {
+                toast.info(`Test data is too large (${result.size.toFixed(2)}MB) for local storage. Using server storage only.`);
+              } else {
+                toast.info("Could not save to local storage. Using server storage only.");
+              }
+            }
+          }
+        }
       }
     }
 

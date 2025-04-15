@@ -10,7 +10,7 @@ const StudyMaterial = () => {
 
   // Determine user role based on authentication data
   const userRole: UserRole = user?.email && (
-    ["obistergaming@gmail.com", "kshitiz6000@gmail.com"].includes(user.email.toLowerCase()) ||
+    ["obistergaming@gmail.com", "kshitiz6000@gmail.com", "gaurav.attri8@gmail.com"].includes(user.email.toLowerCase()) ||
     (user.app_metadata && user.app_metadata.role === "ADMIN")
   ) ? "ADMIN" : "USER";
 

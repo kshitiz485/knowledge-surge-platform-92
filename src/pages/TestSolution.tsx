@@ -45,8 +45,20 @@ const TestSolution = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<string[]>([]);
 
+  // Define the interface for test results
+  interface TestResultsType {
+    score: number;
+    totalScore: number;
+    accuracy: number;
+    timeTaken: { minutes: number; seconds: number };
+    correctAnswers: number;
+    incorrectAnswers: number;
+    unattemptedQuestions: number;
+    subjectPerformance: Record<string, { correct: number; total: number }>;
+  }
+
   // Test results summary
-  const [testResults, setTestResults] = useState({
+  const [testResults, setTestResults] = useState<TestResultsType>({
     score: 0,
     totalScore: 0,
     accuracy: 0,
@@ -168,7 +180,8 @@ const TestSolution = () => {
     let incorrectCount = 0;
     let unattemptedCount = 0;
 
-    const subjectPerformance = {
+    // Initialize with default subjects and allow for dynamic subjects
+    const subjectPerformance: Record<string, { correct: number, total: number }> = {
       physics: { correct: 0, total: 0 },
       chemistry: { correct: 0, total: 0 },
       mathematics: { correct: 0, total: 0 }
@@ -177,6 +190,10 @@ const TestSolution = () => {
     questions.forEach((question, index) => {
       // Update subject totals
       if (question.subject) {
+        // Initialize the subject if it doesn't exist
+        if (!subjectPerformance[question.subject]) {
+          subjectPerformance[question.subject] = { correct: 0, total: 0 };
+        }
         subjectPerformance[question.subject].total++;
       }
 
@@ -189,6 +206,10 @@ const TestSolution = () => {
         if (question.options[optionIndex]?.isCorrect) {
           correctCount++;
           if (question.subject) {
+            // Initialize the subject if it doesn't exist
+            if (!subjectPerformance[question.subject]) {
+              subjectPerformance[question.subject] = { correct: 0, total: 0 };
+            }
             subjectPerformance[question.subject].correct++;
           }
         } else {
@@ -224,7 +245,8 @@ const TestSolution = () => {
     let incorrectCount = 0;
     let unattemptedCount = 0;
 
-    const subjectPerformance = {
+    // Initialize with default subjects and allow for dynamic subjects
+    const subjectPerformance: Record<string, { correct: number, total: number }> = {
       physics: { correct: 0, total: 0 },
       chemistry: { correct: 0, total: 0 },
       mathematics: { correct: 0, total: 0 }
@@ -233,6 +255,10 @@ const TestSolution = () => {
     questions.forEach((question, index) => {
       // Update subject totals
       if (question.subject) {
+        // Initialize the subject if it doesn't exist
+        if (!subjectPerformance[question.subject]) {
+          subjectPerformance[question.subject] = { correct: 0, total: 0 };
+        }
         subjectPerformance[question.subject].total++;
       }
 
@@ -245,6 +271,10 @@ const TestSolution = () => {
         if (question.options[optionIndex]?.isCorrect) {
           correctCount++;
           if (question.subject) {
+            // Initialize the subject if it doesn't exist
+            if (!subjectPerformance[question.subject]) {
+              subjectPerformance[question.subject] = { correct: 0, total: 0 };
+            }
             subjectPerformance[question.subject].correct++;
           }
         } else {
@@ -452,50 +482,26 @@ const TestSolution = () => {
             <div className="col-span-1 md:col-span-2">
               <h3 className="text-lg font-semibold mb-3">Subject-wise Performance</h3>
               <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">Physics</span>
-                    <span className="text-sm font-medium">
-                      {testResults.subjectPerformance.physics.correct} / {testResults.subjectPerformance.physics.total}
-                    </span>
+                {/* Dynamically render all subjects */}
+                {Object.entries(testResults.subjectPerformance).map(([subjectId, performance]) => (
+                  <div key={subjectId}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-medium">
+                        {/* Capitalize the first letter of the subject */}
+                        {subjectId.charAt(0).toUpperCase() + subjectId.slice(1)}
+                      </span>
+                      <span className="text-sm font-medium">
+                        {performance.correct} / {performance.total}
+                      </span>
+                    </div>
+                    <Progress
+                      value={performance.total > 0
+                        ? (performance.correct / performance.total) * 100
+                        : 0}
+                      className="h-2"
+                    />
                   </div>
-                  <Progress
-                    value={testResults.subjectPerformance.physics.total > 0
-                      ? (testResults.subjectPerformance.physics.correct / testResults.subjectPerformance.physics.total) * 100
-                      : 0}
-                    className="h-2"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">Chemistry</span>
-                    <span className="text-sm font-medium">
-                      {testResults.subjectPerformance.chemistry.correct} / {testResults.subjectPerformance.chemistry.total}
-                    </span>
-                  </div>
-                  <Progress
-                    value={testResults.subjectPerformance.chemistry.total > 0
-                      ? (testResults.subjectPerformance.chemistry.correct / testResults.subjectPerformance.chemistry.total) * 100
-                      : 0}
-                    className="h-2"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">Mathematics</span>
-                    <span className="text-sm font-medium">
-                      {testResults.subjectPerformance.mathematics.correct} / {testResults.subjectPerformance.mathematics.total}
-                    </span>
-                  </div>
-                  <Progress
-                    value={testResults.subjectPerformance.mathematics.total > 0
-                      ? (testResults.subjectPerformance.mathematics.correct / testResults.subjectPerformance.mathematics.total) * 100
-                      : 0}
-                    className="h-2"
-                  />
-                </div>
+                ))}
               </div>
             </div>
 

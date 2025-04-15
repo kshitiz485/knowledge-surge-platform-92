@@ -29,7 +29,8 @@ const AppSidebar = () => {
   // List of default admin emails
   const DEFAULT_ADMIN_EMAILS = [
     "obistergaming@gmail.com",
-    "kshitiz6000@gmail.com"
+    "kshitiz6000@gmail.com",
+    "gaurav.attri8@gmail.com"
   ];
 
   // Check if user email is in the admin list or has admin role in metadata
